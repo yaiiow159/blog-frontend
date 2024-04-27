@@ -1,0 +1,24 @@
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('~typeface-roboto/index.css');
+}
+
+@font-face {
+  font-family: 'Open Sans';
+  src: url('~typeface-open-sans/index.css');
+}
+
+$font-primary: 'Roboto', sans-serif;
+$font-secondary: 'Open Sans', sans-serif;
+
+html, body {
+  font-family: $font-primary;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button, input, textarea {
+  font-family: $font-secondary;
+}
+
