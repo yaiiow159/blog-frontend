@@ -12,8 +12,15 @@ import HomePage from "@/pages/HomePage.vue";
 import LoginPage from "@/pages/LoginPage.vue";
 import ResetPassword from "@/pages/ResetPassword.vue";
 import NotFound from "@/pages/NotFound.vue";
+import CategoryPage from "@/pages/CategoryPage.vue";
+import ArticlePage from "@/pages/ArticlePage.vue";
 import Swal from "sweetalert2";
 import {useUserStore} from "@/stores/user";
+import TagPage from "@/pages/TagPage.vue";
+import UserPage from "@/pages/UserPage.vue";
+import UserGroupPage from "@/pages/UserGroupPage.vue";
+import RolePage from "@/pages/RolePage.vue";
+import NotificationPage from "@/pages/NotificationPage.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,6 +42,41 @@ const router = createRouter({
       component: ResetPassword,
     },
     {
+      path: "/categories",
+      name: "Category",
+      component: CategoryPage,
+    },
+    {
+      path: "/articles",
+      name: "Article",
+      component: ArticlePage,
+    },
+    {
+      path: "/tags",
+      name: "Tag",
+      component: TagPage,
+    },
+    {
+      path: "/users",
+      name: "User",
+      component: UserPage,
+    },
+    {
+      path: "/groups",
+      name: "Group",
+      component: UserGroupPage,
+    },
+    {
+      path: "/roles",
+      name: "Role",
+      component: RolePage
+    },
+    {
+      path: "/notification",
+      name: "Notification",
+      component: NotificationPage
+    },
+    {
       path: "/404",
       name: "NotFound",
       component: NotFound,
@@ -48,9 +90,9 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const token = useUserStore().userInfo.token
+  const token = useUserStore().userInfo.token;
   // 驗證jwt token過期時間
-  if (token !== null) {
+  if (token) {
     const now = new Date();
     const expire = new Date(JSON.parse(atob(token.split('.')[1])).exp * 1000);
     if (now > expire) {
@@ -70,7 +112,7 @@ router.beforeEach((to, from, next) => {
     }
   }
   // 沒有jwt token 但是進入到登入頁面
-  if (!token && !['/login', '/forget', '/reset','/'].includes(to.path)) {
+  if (!token && !['/login', '/reset','/'].includes(to.path)) {
     next({name: 'Login', query: {redirect: to.fullPath}});
     return;
   }

@@ -11,7 +11,7 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     const userStore = useUserStore();
-    const accessToken = userStore.userInfo.accessToken;
+    const accessToken = userStore.userInfo.token;
     if(config.url === '/auth/login' || config.url === '/auth/register'
       || config.url === '/auth/forget' || config.url === '/auth/reset') {
       return config;
@@ -26,7 +26,6 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// 响应拦截器
 axiosInstance.interceptors.response.use(
   response => response,
   (error) => {
@@ -56,7 +55,7 @@ axiosInstance.interceptors.response.use(
           handleError('伺服器錯誤', data.message);
           break;
         case 400:
-          handleError(data.code, data.message);
+          handleError('請求發生錯誤', data.message);
           break;
         default:
           handleError('請求失敗', data.message);
@@ -67,7 +66,6 @@ axiosInstance.interceptors.response.use(
     } else {
       handleError('請求錯誤', error.message);
     }
-
     return Promise.reject(error);
   }
 );

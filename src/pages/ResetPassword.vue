@@ -1,8 +1,8 @@
 <template>
   <v-container>
-    <v-form ref="reset_form" v-model="valid">
+    <v-form ref="resetForm" lazy-validation>
       <v-text-field
-        v-model="formState.password"
+        v-model="resetForm.password"
         :rules="passwordRules"
         label="新密碼"
         type="password"
@@ -10,7 +10,7 @@
       ></v-text-field>
 
       <v-text-field
-        v-model="formState.confirmPassword"
+        v-model="resetForm.confirmPassword"
         :rules="confirmPasswordRules"
         label="確認密碼"
         type="password"
@@ -18,7 +18,7 @@
       ></v-text-field>
 
       <v-text-field
-        v-model="formState.verificationCode"
+        v-model="resetForm.verificationCode"
         :rules="verificationCodeRules"
         label="驗證碼"
         required
@@ -34,11 +34,11 @@
     </v-form>
   </v-container>
 
-  <v-snackbar v-model="snackbar" :timeout="3000" :color="snackbarColor" top absolute >
+  <v-snackbar v-model="snackbar" :timeout="2000" :color="snackbarColor" top absolute >
     {{ receiveMessage }}
   </v-snackbar>
 
-  <v-overlay :opacity="0.8" :model-value="loading" z-index="1000" absolute></v-overlay>
+  <v-overlay :opacity="0.8" :model-value="loading" z-index="999" absolute></v-overlay>
 </template>
 
 <script setup>
@@ -52,9 +52,8 @@ const snackbar = ref(false);
 const snackbarColor = ref('success');
 const receiveMessage = ref('');
 const loading = ref(false);
-const reset_form = ref(null);
 const valid = ref(true);
-const formState = reactive({
+const resetForm = ref({
   password: '',
   confirmPassword: '',
   verificationCode: '',
@@ -66,7 +65,7 @@ const passwordRules = [
 ];
 const confirmPasswordRules = [
   v => !!v || '確認密碼是必填的',
-  v => v === formState.password || '密碼和確認密碼不匹配',
+  v => v === resetForm.password || '密碼和確認密碼不匹配',
 ];
 const verificationCodeRules = [
   v => !!v || '驗證碼是必填的',
@@ -74,30 +73,24 @@ const verificationCodeRules = [
 ];
 
 async function resetPassword() {
-  if (reset_form.value.validate()) {
     await axiosInstance.post('/auth/resetPassword', {
-      password: formState.password,
-      confirmPassword: formState.confirmPassword,
-      verificationCode: formState.verificationCode
+      password: resetForm.value.password,
+      confirmPassword: resetForm.value.confirmPassword,
+      verificationCode: resetForm.value.verificationCode
     }).then((response) => {
       if(response.data.result){
         snackbarColor.value = 'success';
         receiveMessage.value = response.data.message;
         snackbar.value = true;
-        // 更改 userStore 的狀態
-        userStore.updatePassword(formState.password);
+        userStore.updatePassword(resetForm.value.password);
         $router.push('/login');
       } else {
         snackbarColor.value = 'error';
         receiveMessage.value = response.data.message;
         snackbar.value = true;
       }
-    }).catch((error) => {
-      snackbarColor.value = 'error';
-      receiveMessage.value = error.data.message;
-      snackbar.value = true;
+    }).catch(() => {
     })
-  }
 }
 </script>
 

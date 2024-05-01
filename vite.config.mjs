@@ -3,6 +3,7 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import Fonts from 'unplugin-fonts/vite'
 import Layouts from 'vite-plugin-vue-layouts'
+import Pages from 'vite-plugin-pages'
 import Vue from '@vitejs/plugin-vue'
 import VueRouter from 'unplugin-vue-router/vite'
 import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
@@ -15,7 +16,17 @@ import { fileURLToPath, URL } from 'node:url'
 export default defineConfig({
   plugins: [
     VueRouter(),
-    Layouts(),
+    Pages({
+      extensions: ['vue', 'md'],
+      pagesDir: 'src/pages',
+      importMode: 'async',}
+    ),
+    Layouts(
+      {
+        layoutsDir: 'src/layouts',
+        defaultLayout: 'default',
+      }
+    ),
     Vue({
       template: { transformAssetUrls }
     }),
@@ -25,11 +36,20 @@ export default defineConfig({
         configFile: 'src/styles/settings.scss',
       },
     }),
-    Components(),
+    Components(
+      {
+        extensions: ['vue', 'md'],
+        dts: 'src/components.d.ts',
+        resolvers: [],
+      }
+    ),
     Fonts({
       google: {
         families: [{
           name: 'Roboto',
+          styles: 'wght@100;300;400;500;700;900',
+        }, {
+          name: 'Open Sans',
           styles: 'wght@100;300;400;500;700;900',
         }],
       },

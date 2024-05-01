@@ -4,7 +4,7 @@
   const value = ref(1)
 
   function goTo(url) {
-    window.open(url)
+    window.open(url, '_blank')
   }
 </script>
 

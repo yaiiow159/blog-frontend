@@ -3,7 +3,7 @@
     <v-container fluid>
       <v-row align="center" justify="center">
         <v-col cols="12" sm="8" md="4">
-          <v-card elevation="2" color="transparent" width="650">
+          <v-card :loading="loading" elevation="2" color="transparent" width="650">
             <v-toolbar color="teal" flat>
               <v-toolbar-title>登入</v-toolbar-title>
             </v-toolbar>
@@ -23,20 +23,21 @@
                     <v-btn color="teal" block @click="handleLogin">登入</v-btn>
                   </v-col>
                   <v-col cols="12" sm="6">
-                    <v-btn text="忘記密碼?" block @click="forgotPasswordDialog = true">忘記密碼?</v-btn>
+                    <v-btn text="忘記密碼?" block @click="openForgotPassword">忘記密碼?</v-btn>
                   </v-col>
                 </v-row>
             </v-card-text>
             <v-card-actions>
-              <v-btn text="註冊新帳號" color="teal" @click="signUpDialog = true">註冊新帳號</v-btn>
+              <v-btn text="註冊新帳號" color="teal" @click="openRegister">註冊新帳號</v-btn>
             </v-card-actions>
           </v-card>
         </v-col>
       </v-row>
     </v-container>
   </div>
+
   <v-dialog v-model="forgotPasswordDialog" persistent max-width="600px">
-    <v-card class="pa-5 rounded-xl">
+    <v-card :loading="loading" class="pa-5 rounded-xl">
       <v-card-title class="text-h5">忘記密碼</v-card-title>
       <v-card-text>
         <v-container>
@@ -57,13 +58,14 @@
 
   <!-- 註冊dialog -->
   <v-dialog v-model="signUpDialog" persistent max-width="600px">
-    <v-card class="pa-5 rounded-xl">
+    <v-card :loading="loading" class="pa-5 rounded-xl">
       <v-card-title class="text-h5">
         註冊
       </v-card-title>
       <v-card-text>
         <v-container>
           <v-row>
+            <v-form ref="signUpForm" lazy-validation>
             <v-col cols="12">
               <v-text-field v-model="registerForm.username" label="姓名" prepend-icon="mdi-account" type="text" required :rules="usernameRules" clearable></v-text-field>
             </v-col>
@@ -79,6 +81,7 @@
             <v-col cols="12">
               <v-text-field v-model="registerForm.address" label="地址" prepend-icon="mdi-map-marker" type="text" clearable></v-text-field>
             </v-col>
+            </v-form>
           </v-row>
         </v-container>
       </v-card-text>
@@ -89,10 +92,10 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
-  <v-snackbar v-model="snackbar" :position="'fixed'" :color="snackbarColor" timeout="1000">
+
+  <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="2000">
     {{ receiveMessage }}
   </v-snackbar>
-  <v-progress-linear indeterminate v-if="loading"></v-progress-linear>
 </template>
 
 <script setup>
@@ -102,6 +105,7 @@
     import { useRouter } from 'vue-router'
     import { rules } from '@/utils/rules'
 
+    const userStore = useUserStore()
     const capchaCodeUrl = ref('http://localhost:9090/api/v1/auth/captchaCode')
     const isRefreshing = ref(false)
     const countdown = ref(0)
@@ -156,62 +160,95 @@
         }, 1000);
     }
 
+    function openForgotPassword() {
+      resetForgetPassword()
+      forgotPasswordDialog.value = true
+    }
+
+    function resetForgetPassword() {
+      email.value = ''
+    }
+
+    function openSignUp() {
+      resetSignUp()
+      signUpDialog.value = true
+    }
+
+    function resetSignUp() {
+      registerForm.value = {
+        username: '',
+        password: '',
+        email: '',
+        address: '',
+        birthday: null,
+        nickname: '',
+      }
+    }
+
+    function resetRegister() {
+      registerForm.value = {
+        username: '',
+        password: '',
+        email: '',
+        address: '',
+        birthday: null,
+        nickname: '',
+      }
+    }
+
+    function openRegister() {
+      resetRegister()
+      signUpDialog.value = true
+    }
+
     async function handleForgotPassword() {
-      loading.value = true
+        loading.value = true
         await axiosInstance.post('/auth/forgetPassword', { email: email.value }).then((response) => {
-         if(response.data.result) {
+         const apiResponse = response.data
+         if(apiResponse.result) {
            loading.value = false
            snackbarColor.value = 'success'
            snackbar.value = true
-           receiveMessage.value = response.data.message
+           receiveMessage.value = apiResponse.message
            forgotPasswordDialog.value = false
          }
-      }).catch(error => {
+      }).catch(() => {
         loading.value = false
-        snackbarColor.value = 'error'
-        snackbar.value = true
-        receiveMessage.value = error.response.data.message
       })
     }
 
     async function handleLogin() {
       loading.value = true
       axiosInstance.post('/auth/login', loginForm.value).then((response) => {
-        if (response.data.result) {
+        const apiResponse = response.data
+        if (apiResponse.result) {
           loading.value = false
           snackbarColor.value = 'success'
           snackbar.value = true
-          receiveMessage.value = response.data.message
-          const userInfo = response.data.data
-          useUserStore().login(userInfo)
+          receiveMessage.value = apiResponse.message
+          const userInfo = apiResponse.data
+          userStore.login(userInfo)
           router.push({ name: 'Home' })
         }
       }).catch(error => {
         loading.value = false
-        snackbarColor.value = 'error'
-        snackbar.value = true
-        receiveMessage.value = error.response.data.message
       })
     }
 
     async function handleSignUp() {
       loading.value = true
       axiosInstance.post('/auth/register', registerForm.value).then((response) => {
-        if (response.data.result) {
+        const apiResponse = response.data
+        if (apiResponse.result) {
           loading.value = false
           snackbarColor.value = 'success'
           snackbar.value = true
-          receiveMessage.value = response.data.message
+          receiveMessage.value = apiResponse.message
           signUpDialog.value = false
-          const userInfo = response.data.data
-          useUserStore().login(userInfo)
           router.push({ name: 'Login' })
         }
       }).catch(error => {
         loading.value = false
-        snackbarColor.value = 'error'
-        snackbar.value = true
-        receiveMessage.value = error.response.data.message
       })
     }
 </script>
@@ -222,6 +259,10 @@
         justify-content: center
         align-items: center
         height: 100vh
+        background-image: url("../assets/login_bg.jpg")
+        background-size: cover
+        background-position: center
+        background-repeat: no-repeat
     .pointer
       cursor: pointer
 </style>

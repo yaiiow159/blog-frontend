@@ -1,79 +1,83 @@
 <template>
-  <v-breadcrumbs bg-color="transparent" color="white" active-color="primary" :items="breadcrumbs" divider=">" >
-    <template v-slot:prepend>
-      <v-icon icon="mdi-home" size="small"></v-icon>
-    </template>
-    <template v-slot:item="{ item }">
-      <v-breadcrumbs-item :title="item.text" :href="item.href" :disabled="item.disabled">
-      </v-breadcrumbs-item>
-    </template>
-  </v-breadcrumbs>
-  <v-container fluid>
-    <v-row class="search-bar">
-      <v-col cols="12" sm="8" offset-sm="2">
+    <v-breadcrumbs bg-color="breadcrumb" active-color="primary" rounded :items="breadcrumbs" divider=">" >
+      <template v-slot:prepend>
+        <v-icon icon="mdi-home" size="small"></v-icon>
+      </template>
+      <template v-slot:item="{ item }">
+        <v-breadcrumbs-item :title="item.text" :href="item.href" :disabled="item.disabled">
+        </v-breadcrumbs-item>
+      </template>
+    </v-breadcrumbs>
+    <v-row class="mt-5 mb-5">
+      <v-col cols="12" md="6">
         <v-text-field
           v-model="search"
-          append-icon="mdi-magnify"
           label="搜尋文章"
           single-line
           hide-details
+          clearable
+          class="rounded-xl"
+          append-icon="mdi-magnify"
+          @click:append="searchArticles"
         ></v-text-field>
-        <v-btn translate="yes" color="search" @click="searchArticles">搜尋</v-btn>
       </v-col>
     </v-row>
     <v-row>
-      <v-col cols="12" sm="7" offset-sm="1">
-        <h2>最新文章</h2>
-        <v-row>
-          <v-col
-            cols="12"
-            sm="6"
-            md="4"
-            v-for="article in latestArticles"
-            :key="article.id"
-          >
-            <v-card>
-              <v-img :src="article.image" aspect-ratio="4/3"></v-img>
-              <v-card-title>{{ article.title }}</v-card-title>
-              <v-card-subtitle>{{ article.authorName }}</v-card-subtitle>
-              <v-card-text>{{ article.content.substring(0, 100) + '...' }}</v-card-text>
-              <v-card-actions>
-                <v-btn translate="yes" color="primary" text="檢閱" @click="viewArticle(article.id)">檢閱</v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-col>
-        </v-row>
-      </v-col>
-      <v-col cols="12" sm="7" offset-sm="1">
-        <h2>熱門文章</h2>
-        <v-row>
-          <v-col
-            cols="12"
-            sm="6"
-            md="4"
-            v-for="article in popularArticles"
-            :key="article.id"
-          >
-            <v-card class="article-card" elevation="2">
-                <v-img :src="article.image" aspect-ratio="4/3" alt="article image" ></v-img>
-                <v-card-title>{{ article.title }}</v-card-title>
-                <v-card-subtitle>{{ article.authorName }}</v-card-subtitle>
-                <v-card-text>{{ article.content.substring(0, 100) + '...' }}</v-card-text>
-                <v-card-actions>
-                    <v-btn translate="yes" color="primary" text="檢視" @click="viewArticle(article.id)">檢視</v-btn>
-                </v-card-actions>
-            </v-card>
-          </v-col>
-        </v-row>
+      <v-card-title class="text-h5">最新文章區</v-card-title>
+      <v-col
+        cols="12"
+        md="4"
+        sm="6"
+        v-for="article in latestArticles"
+        :key="article.id"
+      >
+        <v-card class="mx-auto" max-width="344" outlined>
+          <v-img :src="article.image" height="200px" class="white--text align-end" gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)">
+            <v-card-title>{{ article.title }}</v-card-title>
+          </v-img>
+          <v-card-subtitle class="pb-0">{{ article.authorName }}</v-card-subtitle>
+          <v-card-text class="text--primary">
+            <div>{{ article.content.substring(0, 100) + '...' }}</div>
+          </v-card-text>
+          <v-card-actions>
+            <v-btn color="primary" text @click="viewArticle(article.id)">閱讀更多</v-btn>
+          </v-card-actions>
+        </v-card>
       </v-col>
     </v-row>
-  </v-container>
+    <v-divider thickness="2" class="my-3">
+      <v-icon icon="mdi-arrow-down"></v-icon>
+    </v-divider>
+    <v-row>
+      <v-card-title class="text-h5">熱門文章區</v-card-title>
+      <v-col
+        cols="12"
+        md="4"
+        sm="6"
+        v-for="article in latestArticles"
+        :key="article.id"
+      >
+        <v-card class="mx-auto" max-width="344" outlined>
+          <v-img :src="article.image" height="200px" class="white--text align-end" gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)">
+            <v-card-title>{{ article.title }}</v-card-title>
+          </v-img>
+          <v-card-subtitle class="pb-0">{{ article.authorName }}</v-card-subtitle>
+          <v-card-text class="text--primary">
+            <div>{{ article.content.substring(0, 100) + '...' }}</div>
+          </v-card-text>
+          <v-card-actions>
+            <v-btn color="primary" text @click="viewArticle(article.id)">閱讀更多</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-progress-circular size="64" indeterminate color="primary" v-if="loading"></v-progress-circular>
 
   <v-dialog v-model="viewArticleDialog" persistent fullscreen>
-    <v-card color="transparent" class="mx-auto pa-5 rounded-xl">
+    <v-card class="pa-5 rounded-xl">
       <v-card-title class="text-h5">{{ article.title }}</v-card-title>
       <v-card-text>
-        <v-container fluid>
+        <v-container>
           <v-row>
             <v-col cols="12" md="4">
               <v-img :src="article.image" aspect-ratio="4/3"></v-img>
@@ -98,14 +102,6 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
-
-  <v-snackbar v-model="snackbar" :timeout="3000" :color="snackbarColor" top absolute >
-    {{ receiveMessage }}
-  </v-snackbar>
-
-  <v-overlay :opacity="0.8" :model-value="loading" z-index="999" absolute>
-    <v-progress-circular indeterminate color="primary"></v-progress-circular>
-  </v-overlay>
 </template>
 
 <script setup>
@@ -113,7 +109,6 @@
   import axiosInstance from "@/utils/request";
 
   const viewArticleDialog = ref(false);
-  const article = ref({});
   const snackbar = ref(false);
   const snackbarColor = ref('');
   const receiveMessage = ref('');
@@ -126,7 +121,13 @@
   ]);
   const popularArticles = ref([
   ]);
-
+  const article = ref({
+    title: '',
+    content: '',
+    image: null,
+    authorName: '',
+    authorEmail: ''
+  });
   onMounted(async () => {
     await getLatestArticles()
     await getPopularArticles()
@@ -169,14 +170,10 @@
     await axiosInstance.get('/posts/popular').then((response) => {
        if(response.data.result) {
          loading.value = false
-         snackbarColor.value = 'success'
          popularArticles.value = response.data.data
        }
-    }).catch((error) => {
+    }).catch(() => {
       loading.value = false
-      snackbarColor.value = 'error'
-      receiveMessage.value = error.response.data.message
-      snackbar.value = true
     })
   }
 
@@ -185,77 +182,21 @@
     await axiosInstance.get('/posts/' + id).then((response) => {
        if(response.data.result) {
          loading.value = false
-         snackbarColor.value = 'success'
          article.value = response.data.data
          viewArticleDialog.value = true
        }
-    }).catch((error) => {
+    }).catch(() => {
       loading.value = false
-      snackbarColor.value = 'error'
-      receiveMessage.value = error.response.data.message
-      snackbar.value = true
     })
   }
 
 </script>
 
 <style scoped lang="sass">
-.search-bar
-  position: relative
-  margin-bottom: 20px
-  .v-text-field
-    max-width: 300px
-    margin: 0 auto
-.v-img
-  transition: transform 0.5s ease
-  cursor: pointer
+.v-btn
+  transition: background-color 0.3s ease
+.v-btn:hover
+  background-color: var(--v-primary-base)
 
-.v-img:hover
-  transform: scale(1.05)
-.v-card-title, .v-card-text
-  white-space: nowrap
-  overflow: hidden
-  text-overflow: ellipsis
-h2
-  font-size: 2em
-  font-weight: bold
-  color: #333
-  position: relative
-  text-align: center
-  margin-bottom: 1.5em
-  background: -webkit-linear-gradient(45deg, var(--v-theme-primary), var(--v-theme-secondary))
-  -webkit-background-clip: text
-  -webkit-text-fill-color: transparent
-  text-shadow: 2px 2px 8px var(--v-theme-primary)
-
-  &:after
-    content: ''
-    display: block
-    width: 60%
-    height: 4px
-    background: -webkit-linear-gradient(45deg, var(--v-theme-primary), var(--v-theme-secondary))
-    margin: 20px auto
-    border-radius: 2px
-    transition: width 0.3s
-    @media (hover: hover)
-      &:hover
-        width: 100%
-
-  @media (max-width: 768px)
-    font-size: 1.5em
-@keyframes fadeIn
-  from
-    opacity: 0
-    transform: translateY(20px)
-  to
-    opacity: 1
-    transform: translateY(0)
-.article-card
-  animation: fadeIn 0.8s ease-out
-  opacity: 0
-.article-content
-  white-space: pre-wrap
-  word-break: break-all
-  overflow-y: auto
 </style>
 

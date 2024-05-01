@@ -1,6 +1,7 @@
 <template>
-    <router-view :key="$route.path"></router-view>
+   <default></default>
 </template>
 
 <script setup>
+import Default from "@/layouts/default.vue";
 </script>

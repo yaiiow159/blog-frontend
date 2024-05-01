@@ -14,18 +14,17 @@ export const useUserStore = defineStore('user', {
     isLoggedIn: false,
   }),
   getters: {
-    updateRoles(roles) {
-      this.userInfo.roles = roles;
+    // 用户是否登录
+    isLogin(state) {
+      return state.isLoggedIn;
     },
-    updateLoginTime() {
-      this.userInfo.loginTime = new Date().toISOString();
+    // 用户的角色
+    getRoles(state) {
+      return state.userInfo.roles;
     },
-
-    updateAccessToken(token) {
-      this.userInfo.token = token;
-    },
-    updatePassword(password) {
-      this.userInfo.password = password;
+    // 用户的基本信息
+    getUserInfo(state) {
+      return state.userInfo;
     },
   },
   actions: {
