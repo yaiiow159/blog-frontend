@@ -79,11 +79,15 @@ async function getLoginRecords() {
 
 async function getLoginRecord(id) {
   loading.value = true
-  await axiosInstance.get('/loginRecords/' + Number(id)).then((response) => {
+  await axiosInstance.get('/loginRecords/' + userStore.userInfo.username + '/' + Number(id)).then((response) => {
     const apiResponse = response.data;
     if(apiResponse.result) {
       loginRecord.value = apiResponse.data
       loading.value = false
+    } else {
+      snackbarColor.value = 'error';
+      receiveMessage.value = apiResponse.message;
+      snackbar.value = true;
     }
   }).catch(() => {
     loading.value = false
@@ -245,6 +249,16 @@ function resetLoginRecord() {
           </v-row>
         </v-container>
       </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn
+            color="cancel"
+            variant="text"
+            @click="dialogViewNotification = false"
+        >
+          關閉
+        </v-btn>
+      </v-card-actions>
     </v-card>
   </v-dialog>
 

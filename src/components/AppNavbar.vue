@@ -3,9 +3,10 @@
   import axiosInstance from "@/utils/request";
   import {rules} from "@/utils/rules";
   import {useUserStore} from "@/stores/user";
-  import {createRouter as $router} from "vue-router";
+  import { useRouter } from "vue-router";
   import Swal from 'sweetalert2'
 
+  const router = useRouter();
   const drawer = ref(false);
   const snackbar = ref(false);
   const snackbarColor = ref('success');
@@ -13,9 +14,13 @@
   const loading = ref(false);
   const userStore = useUserStore();
   const { usernameRule, passwordRule, emailRule } = rules
-
+  const usernameRuleRef = [usernameRule]
+  const passwordRuleRef = [passwordRule]
+  const emailRuleRef = [emailRule]
 
   const imageUrl = ref(null);
+  const imageName = ref('');
+  const imageFile = ref(null);
   const dialogUserProfile = ref(false);
   const dialogContact = ref(false)
   const dialogPassword = ref(false)
@@ -139,12 +144,32 @@
   }
 
   function openNotification() {
-    $router.push(
-      { name: 'Notification' }
-    )
+    router.push("/notifications")
   }
 
-  async function notificationCounting() {
+  function handleFileUpload(e) {
+    const files = e.target.files
+    if (files[0] !== undefined) {
+      imageName.value = files[0].name
+      if (files[0].type.indexOf('png') === -1) {
+        return
+      }
+      const fr = new FileReader()
+      fr.readAsDataURL(files[0])
+      fr.addEventListener('load', () => {
+        imageUrl.value = fr.result
+        imageFile.value = files[0]
+        console.log("圖片url:" + imageUrl.value)
+        console.log("圖片File:" + imageFile.value)
+      })
+    } else {
+      imageName.value = ''
+      imageFile.value = null
+      imageUrl.value = ''
+    }
+  }
+
+    async function notificationCounting() {
      await axiosInstance.get('/notifications/count').then((response) => {
        const apiResponse = response.data
        if(apiResponse.result) {
@@ -244,18 +269,6 @@
     })
   }
 
-  function handleFileChange(file) {
-    if (!file) {
-      imageUrl.value = null;
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      imageUrl.value = reader.result;
-    };
-    reader.readAsDataURL(file);
-  }
-
   async function handleUserProfile() {
     loading.value = true;
     const username = userStore.userInfo.username
@@ -320,8 +333,8 @@
     <v-spacer></v-spacer>
 
     <template v-if="$vuetify.display.mdAndUp">
-      <v-btn class="text-none" stacked>
-        <v-badge color="error" :content="notificationCount" @click="openNotification">
+      <v-btn class="text-none" stacked text @click="openNotification">
+        <v-badge color="error" :content="notificationCount">
           <v-icon>mdi-bell-outline</v-icon>
         </v-badge>
       </v-btn>
@@ -457,23 +470,24 @@
           <v-container>
             <v-row>
                 <v-col cols="12" class="text-center">
-                  <v-avatar size="120" class="rounded-xl ma-2" :src="imageUrl" :ref="userProfile.avatar">
+                  <v-avatar size="120" class="ma-2" :image="imageUrl">
                     <span class="text-h5" v-if="!imageUrl">{{ userStore.userInfo.username }}</span>
                   </v-avatar>
                   <v-file-input
+                    type="file"
                     label="選擇圖片"
                     prepend-icon="mdi-camera"
-                    @change="handleFileChange($event.target.files[0])"
+                    @change="handleFileUpload"
                     accept="image/png"
                     variant="solo-filled"
                   ></v-file-input>
                 </v-col>
                 <v-col cols="12">
-                  <v-text-field :rules="usernameRule" v-model="userProfile.username"  label="姓名" outlined dense></v-text-field>
-                  <v-text-field :rules="passwordRule" v-model="userProfile.password"  label="密碼" type="password" outlined dense></v-text-field>
+                  <v-text-field :rules="usernameRuleRef" v-model="userProfile.username"  label="姓名" outlined dense></v-text-field>
+                  <v-text-field :rules="passwordRuleRef" v-model="userProfile.password"  label="密碼" type="password" outlined dense></v-text-field>
                   <v-text-field v-model="userProfile.nickname"  label="暱稱" outlined dense></v-text-field>
                   <v-date-picker v-model="userProfile.birthday"  landscape></v-date-picker>
-                  <v-text-field :rules="emailRule" v-model="userProfile.email" label="電子郵件" outlined dense></v-text-field>
+                  <v-text-field :rules="emailRuleRef" v-model="userProfile.email" label="電子郵件" outlined dense></v-text-field>
                   <v-text-field v-model="userProfile.address" label="地址" :model-value="userProfile.address" outlined dense></v-text-field>
                 </v-col>
             </v-row>

@@ -6,9 +6,9 @@ const breadcrumbs = ref([
   { text: '首頁', disabled: false, href: '/home' },
   { text: '群組管理', disabled: true, href: '/groups' },
 ])
-const reviewLevel = ref([
+const reviewLevels = ref([
   { text: '管理員', value: 'ADMIN' },
-  { text: '使用者', value: 'USER' },
+  { text: '使用者', value: 'USER'},
   { text: '查詢', value:'SEARCH_ONLY'},
 ])
 const name = ref('')
@@ -215,24 +215,20 @@ async function deleteGroup(id) {
         <v-text-field
             v-model="search.groupName"
             density="compact"
-            label="名稱"
+            label="群組名稱"
             prepend-inner-icon="mdi-magnify"
             variant="solo-filled"
             flat
             hide-details
             single-line
         ></v-text-field>
-        <v-text-field
-            class="ml-2"
-            v-model="search.reviewLevel"
-            density="compact"
-            label="名稱"
-            prepend-inner-icon="mdi-magnify"
-            variant="solo-filled"
-            flat
-            hide-details
-            single-line
-        ></v-text-field>
+        <v-select v-model="search.reviewLevel" :items="reviewLevels"
+                  :item-title="reviewLevels.text"
+                  :item-value="reviewLevels.value"
+                  label="審查等級"
+                  variant="solo-filled"
+                  density="compact" class="ml-2">
+        </v-select>
         <v-btn :bordered="false" color="search" class="ml-2 outlined" size="large" density="compact" @click="getGroups">查詢</v-btn>
         <v-btn :bordered="false" color="add" class="ml-2 outlined" size="large" density="compact" @click="handleAddGroup">新增</v-btn>
       </v-card-title>
@@ -282,7 +278,7 @@ async function deleteGroup(id) {
               >
                 群組名稱:
                 <v-text-field
-                    v-model="group.name"
+                    v-model="group.groupName"
                     label="名稱"
                     required
                 ></v-text-field>
@@ -300,8 +296,10 @@ async function deleteGroup(id) {
                   cols="12">
                 群組權限:
                 <v-select
-                    v-model="group.reviewLevelName"
+                    v-model="group.reviewLevel"
                     :items="reviewLevel"
+                    :item-title="item => item.text"
+                    :item-value="item => item.value"
                     label="權限"
                     chips
                     clearable
@@ -364,8 +362,10 @@ async function deleteGroup(id) {
                   cols="12">
                 群組權限:
                 <v-select
-                    v-model="group.reviewLevelName"
+                    v-model="group.reviewLevel"
                     :items="reviewLevel"
+                    :item-title="item => item.text"
+                    :item-value="item => item.value"
                     label="權限"
                     chips
                     clearable

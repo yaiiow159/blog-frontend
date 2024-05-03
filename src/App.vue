@@ -1,5 +1,6 @@
 <template>
-  <component :is="checkComponent"></component>
+  <component v-if="userStore.isLogin" :is="Default"></component>
+  <component v-else :is="LoginPage"></component>
 </template>
 
 <script setup>
@@ -8,6 +9,5 @@ import LoginPage from "@/pages/LoginPage.vue";
 import {useUserStore} from "@/stores/user";
 
 const userStore = useUserStore()
-const checkComponent = userStore.userInfo.token ? Default : LoginPage
 
 </script>

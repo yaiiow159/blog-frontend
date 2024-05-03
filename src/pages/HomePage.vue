@@ -33,12 +33,25 @@
       >
         <v-card class="mx-auto" max-width="344" outlined>
           <v-img :src="article.image" height="200px" class="white--text align-end" gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)">
-            <v-card-title>{{ article.title }}</v-card-title>
+            <v-card-title>文章標題:{{ article.title }}</v-card-title>
           </v-img>
-          <v-card-subtitle class="pb-0">{{ article.authorName }}</v-card-subtitle>
+          <v-card-subtitle class="pb-2 text-truncate mt-2">作者名稱:{{ article.authorName }}</v-card-subtitle>
           <v-card-text class="text--primary">
-            <div>{{ article.content.substring(0, 100) + '...' }}</div>
+            <div class="text-truncate">內文:{{ article.content.substring(0, 100) + '...' }}</div>
+            <!-- 增加標籤chip -->
           </v-card-text>
+          <v-card-subtitle class="pb-2 text-truncate">
+            <v-chip
+              v-for="tag in article.tags"
+              :key="tag.id"
+              class="ma-1"
+              color="primary"
+              label
+              text-color="white"
+            >
+              {{ tag.name }}
+            </v-chip>
+          </v-card-subtitle>
           <v-card-actions>
             <v-btn color="primary" text @click="viewArticle(article.id)">閱讀更多</v-btn>
           </v-card-actions>
@@ -58,12 +71,12 @@
         :key="article.id"
       >
         <v-card class="mx-auto" max-width="344" outlined>
-          <v-img :src="article.image" height="200px" class="white--text align-end" gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)">
-            <v-card-title>{{ article.title }}</v-card-title>
+          <v-img :src="article.image ? article.image : '../assets/article_default.jpg'" cover height="200px" class="align-end" gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)">
+            <v-card-title>文章標題:{{ article.title }}</v-card-title>
           </v-img>
-          <v-card-subtitle class="pb-0">{{ article.authorName }}</v-card-subtitle>
+          <v-card-subtitle class="pb-2 text-truncate mt-2">作者名稱:{{ article.authorName }}</v-card-subtitle>
           <v-card-text class="text--primary">
-            <div>{{ article.content.substring(0, 100) + '...' }}</div>
+            <div class="text-truncate">內文:{{ article.content.substring(0, 100) + '...' }}</div>
           </v-card-text>
           <v-card-actions>
             <v-btn color="primary" text @click="viewArticle(article.id)">閱讀更多</v-btn>
@@ -74,22 +87,22 @@
     <v-progress-circular size="64" indeterminate color="primary" v-if="loading"></v-progress-circular>
 
   <v-dialog v-model="viewArticleDialog" persistent fullscreen>
-    <v-card class="pa-5 rounded-xl">
+    <v-card class="pa-5 rounded-xl elevation-5">
       <v-card-title class="text-h5">{{ article.title }}</v-card-title>
       <v-card-text>
         <v-container>
           <v-row>
             <v-col cols="12" md="4">
-              <v-img :src="article.image" aspect-ratio="4/3"></v-img>
-              <v-list>
+              <v-img :src="article.image" aspect-ratio="4/3" class="elevation-2"></v-img>
+              <v-list dense class="mt-5">
                 <v-list-item>
-                    <v-list-item-title>作者: {{ article.authorName }}</v-list-item-title>
+                    <v-list-item-title class="font-weight-bold">作者: {{ article.authorName }}</v-list-item-title>
                     <v-list-item-subtitle>作者郵箱: {{ article.authorEmail }}</v-list-item-subtitle>
                 </v-list-item>
               </v-list>
             </v-col>
             <v-col cols="12" md="8">
-              <div class="article-content" style="max-height: 600px; overflow-y: auto;">
+              <div class="article-content" style="max-height: 600px; overflow-y: auto; font-size: 16px; line-height: 1.6;">
                 {{ article.content }}
               </div>
             </v-col>
@@ -98,7 +111,7 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="cancel" text="返回" @click="viewArticleDialog = false">返回</v-btn>
+        <v-btn color="cancel" text @click="viewArticleDialog = false">返回</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -135,27 +148,38 @@
 
   async function searchArticles() {
     loading.value = true
-    await axiosInstance.get('/posts/searchByKeyword', {params: {keyword: search.value}}).then((response) => {
-      if(response.data.result) {
+    await axiosInstance.get('/posts/searchByKeyword', {params:
+          {keyword: search.value}}
+    ).then((response) => {
+      const apiResponse = response.data
+      if(apiResponse.result) {
         loading.value = false
         snackbarColor.value = 'success'
-        latestArticles.value = response.data.data
+        latestArticles.value = apiResponse.data
+      } else {
+        loading.value = false
+        snackbarColor.value = 'error'
+        receiveMessage.value = apiResponse.message
+        snackbar.value = true
       }
-    }).catch((error) => {
+    }).catch(() => {
       loading.value = false
-      snackbarColor.value = 'error'
-      receiveMessage.value = error.response.data.message
-      snackbar.value = true
     })
   }
 
   async function getLatestArticles() {
     loading.value = true
     await axiosInstance.get('/posts/latest').then((response) => {
-       if(response.data.result) {
+      const apiResponse = response.data
+       if(apiResponse.result) {
          loading.value = false
          snackbarColor.value = 'success'
-         latestArticles.value = response.data.data
+         latestArticles.value = apiResponse.data
+       } else {
+         loading.value = false
+         snackbarColor.value = 'error'
+         receiveMessage.value = apiResponse.message
+         snackbar.value = true
        }
     }).catch((error) => {
       loading.value = false
@@ -168,9 +192,15 @@
   async function getPopularArticles() {
     loading.value = true
     await axiosInstance.get('/posts/popular').then((response) => {
-       if(response.data.result) {
+      const apiResponse = response.data
+       if(apiResponse.result) {
          loading.value = false
-         popularArticles.value = response.data.data
+         popularArticles.value = apiResponse.data
+       } else {
+         loading.value = false
+         snackbarColor.value = 'error'
+         receiveMessage.value = apiResponse.message
+         snackbar.value = true
        }
     }).catch(() => {
       loading.value = false
@@ -180,10 +210,16 @@
   async function viewArticle(id) {
     loading.value = true
     await axiosInstance.get('/posts/' + id).then((response) => {
-       if(response.data.result) {
+       const apiResponse = response.data
+       if(apiResponse.result) {
          loading.value = false
-         article.value = response.data.data
+         article.value = apiResponse.data
          viewArticleDialog.value = true
+       } else {
+         loading.value = false
+         snackbarColor.value = 'error'
+         receiveMessage.value = apiResponse.message
+         snackbar.value = true
        }
     }).catch(() => {
       loading.value = false
@@ -197,6 +233,14 @@
   transition: background-color 0.3s ease
 .v-btn:hover
   background-color: var(--v-primary-base)
+
+.elevation-2
+  margin-top: 20px
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2)
+.elevation-5
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3)
+.font-weight-bold
+  font-weight: bold
 
 </style>
 

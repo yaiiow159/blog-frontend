@@ -71,7 +71,7 @@
         await axiosInstance.get('/categories/' + Number(id)).then((response) => {
             const apiResponse = response.data;
             if(apiResponse.result) {
-                category.value = apiResponse.data.data
+                category.value = apiResponse.data
                 loading.value = false
             }
         }).catch(() => {
@@ -301,6 +301,7 @@
               </v-col>
               <v-col
                   cols="12">
+                描述:
                 <v-text-field
                     v-model="category.description"
                     label="描述"

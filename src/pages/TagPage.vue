@@ -233,6 +233,7 @@
             <v-toolbar-title>標籤列表</v-toolbar-title>
           </v-toolbar>
         </template>
+
         <template v-slot:item.actions="{ item }">
             <v-btn :bordered="false" class="me-2 mb-2 outlined" density="compact" color="edit" @click="handleEditTag(item.id)">編輯</v-btn>
             <v-btn :bordered="false" class="me-2 mb-2 outlined" density="compact" color="delete" @click="deleteCategory(item.id)">刪除</v-btn>

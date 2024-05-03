@@ -81,7 +81,7 @@ const router = createRouter({
       component: RolePage
     },
     {
-      path: "/notification",
+      path: "/notifications",
       name: "Notification",
       component: NotificationPage
     },

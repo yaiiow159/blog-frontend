@@ -58,6 +58,10 @@ onMounted(async () => {
   await getRoles()
   await getGroups()
 })
+
+function formatePassword(password) {
+  return '*'.repeat(password.length)
+}
 async function getUsers() {
   loading.value = true
   await axiosInstance.get('/users', {params:
@@ -302,6 +306,22 @@ async function deleteCategory(id) {
           <v-toolbar flat>
             <v-toolbar-title>使用者列表</v-toolbar-title>
           </v-toolbar>
+        </template>
+        <template v-slot:item.password="{ item }">
+          {{ formatePassword(item.password) }}
+        </template>
+        <template v-slot:item.roleNames="{ item }">
+          <v-chip v-for="role in item.roleNames" class="me-2 ma-2" size="small" color="primary">
+            {{ role }}
+          </v-chip>
+        </template>
+        <template v-slot:item.status="{ item }">
+          <v-chip prepend-icon="mdi-check" v-if="!item.status" class="me-2 mb-2" size="small" color="success">
+            啟用
+          </v-chip>
+          <v-chip v-else prepend-icon="mdi-close" class="me-2 mb-2" size="small" color="error">
+            停用
+          </v-chip>
         </template>
         <template v-slot:item.actions="{ item }">
             <v-btn :bordered="false" class="me-2 mb-2 outlined" density="compact" color="edit" @click="handleEditTag(item.id)">編輯</v-btn>

@@ -283,6 +283,8 @@ function resetComment() {
                 <v-select
                     v-model="comment.reason"
                     :items="selectReportReason"
+                    :item-title="item => item.text"
+                    :item-value="item => item.value"
                     density="compact"
                     label="檢舉原因"
                     required

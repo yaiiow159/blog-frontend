@@ -3,7 +3,6 @@ import axiosInstance from "@/utils/request";
 import { ref, onMounted } from 'vue';
 import {useUserStore} from "@/stores/user";
 
-_
 
 const breadcrumbs = ref([
   { text: '首頁', disabled: false, href: '/home' },
@@ -26,6 +25,11 @@ const pageable = ref({
   pageNumber: Number(1),
   pageSize: Number(10)
 })
+const isReads = ref([
+  { text: '全部', value: null },
+  { text: '未讀', value: 'false' },
+  { text: '已讀', value: 'true' },
+])
 const notifications = ref([])
 const dialogViewNotification = ref(false)
 const headers = [
@@ -152,23 +156,18 @@ function resetNotification() {
           hide-details
           single-line
       ></v-text-field>
-      <v-radio-group class="ml-2" v-model="search.isRead">
-        <v-radio>
-          <template v-slot:label>
-            <div>全部</div>
-          </template>
-        </v-radio>
-        <v-radio value="true">
-          <template v-slot:label>
-            <div>已讀</div>
-          </template>
-        </v-radio>
-        <v-radio value="false">
-          <template v-slot:label>
-            <div>未讀</div>
-          </template>
-        </v-radio>
-      </v-radio-group>
+      <v-select class="ml-2" v-model="search.isRead" density="compact" label="是否已讀" variant="solo-filled" flat hide-details>
+        <template v-slot:label>
+          是否已讀
+        </template>
+        <v-list>
+          <v-list-item
+              v-for="item in isReads"
+              :title="item.text"
+              :value="item.value"
+          ></v-list-item>
+        </v-list>
+      </v-select>
       <v-divider class="mx-2" inset vertical></v-divider>
       <v-btn :bordered="false" color="search" class="mr-2 outlined" size="large" density="compact" @click="getNotifications">查詢</v-btn>
     </v-card-title>

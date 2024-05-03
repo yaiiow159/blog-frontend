@@ -60,6 +60,7 @@
     { title: '作者', key: 'authorName', sortable: true},
     { title: '內文', key: 'content', sortable: false },
     { title: '描述', key: 'description', sortable: false },
+    { title: '狀態', key: 'status', sortable: true },
     { title: '發布時間', key: 'createDate',sortable: true },
     { title: '更新時間', key: 'updateDate',sortable: true },
     { title: '操作', key: 'actions',sortable: false },
@@ -279,7 +280,10 @@
               hide-details
               single-line
               :items="tags"
-          ></v-select>
+              :item-title="item => item.name"
+              :item-value="item => item.id"
+          >
+          </v-select>
         <v-text-field
             v-model="search.title"
             density="compact"
@@ -316,8 +320,14 @@
               <v-toolbar-title>文章列表</v-toolbar-title>
             </v-toolbar>
           </template>
+          <template v-slot:item.status="{ item }">
+            <v-chip :color="item.status === '發佈' ? 'success' : 'warning'">{{ item.status }}</v-chip>
+          </template>
+          <template v-slot:item.content="{ item }">
+            <div class="max-25" v-html="item.content.substring(0, 100) + '...'"></div>
+          </template>
           <template v-slot:item.actions="{ item }">
-              <v-btn class="me-2 mb-2 outlined" density="compact" color="search" @click="viewArticle(item.id)">查看</v-btn>
+              <v-btn class="me-2 mb-2 outlined" density="compact" color="search" @click="viewArticle(item.id)">閱讀</v-btn>
               <v-btn v-show="userStore.userInfo.username === item.authorName" class="me-2 mb-2 outlined" density="compact" color="edit" @click="editArticle(item.id)">編輯</v-btn>
               <v-btn v-show="userStore.userInfo.username === item.authorName" class="me-2 mb-2 outlined" density="compact" color="delete" @click="deleteArticle(item.id)">刪除</v-btn>
           </template>
@@ -352,8 +362,8 @@
                 <v-col cols="6">
                 <v-select v-model="article.categoryId"
                           :items="categories"
-                          item-title="name"
-                          item-value="id"
+                          :item-title="item => item.name"
+                          :item-value="item => item.id"
                           label="分類">
                   <template v-slot:prepend>
                     <v-icon icon="mdi-folder-outline"></v-icon>
@@ -361,7 +371,9 @@
                 </v-select>
                 </v-col>
                 <v-col cols="6">
-                <v-select multiple v-model="article.tagIds" :items="tags" item-title="name" item-value="id" label="標籤">
+                <v-select multiple v-model="article.tagIds" :items="tags"
+                          :item-title="item => item.name"
+                          :item-value="item => item.id" label="標籤">
                   <template v-slot:prepend>
                     <v-icon icon="mdi-tag-multiple-outline"></v-icon>
                   </template>
@@ -405,8 +417,8 @@
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="blue-darken-1" variant="text" @click="dialogAddArticle = false">取消</v-btn>
-            <v-btn color="blue-darken-1" variant="text" @click="handleAddArticle">新增</v-btn>
+            <v-btn color="add" variant="text" @click="handleAddArticle">新增</v-btn>
+            <v-btn color="cancel" variant="text" @click="dialogAddArticle = false">取消</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -484,8 +496,8 @@
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="blue-darken-1" variant="text" @click="dialogAddArticle = false">取消</v-btn>
-            <v-btn color="blue-darken-1" variant="text" @click="handleAddArticle()">新增</v-btn>
+            <v-btn color="add" variant="text" @click="handleAddArticle()">新增</v-btn>
+            <v-btn color="cancel" variant="text" @click="dialogAddArticle = false">取消</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>

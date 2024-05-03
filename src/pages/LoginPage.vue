@@ -66,13 +66,13 @@
         <v-container>
           <v-row>
             <v-col cols="12">
-              <v-text-field v-model="registerForm.username" label="姓名" prepend-icon="mdi-account" type="text" required :rules="usernameRules" clearable></v-text-field>
+              <v-text-field v-model="registerForm.userName" label="姓名" prepend-icon="mdi-account" type="text" required :rules="usernameRules" clearable></v-text-field>
             </v-col>
             <v-col cols="12">
               <v-text-field v-model="registerForm.password" label="密碼" prepend-icon="mdi-lock" type="password" required :rules="passwordRules" clearable></v-text-field>
             </v-col>
             <v-col cols="12">
-              <v-text-field v-model="registerForm.nickname" label="暱稱" prepend-icon="mdi-account" type="text" clearable></v-text-field>
+              <v-text-field v-model="registerForm.nickName" label="暱稱" prepend-icon="mdi-account" type="text" clearable></v-text-field>
             </v-col>
             <v-col cols="12">
               <v-text-field v-model="registerForm.email" label="電子郵件" prepend-icon="mdi-email" type="email" required :rules="emailRules" clearable></v-text-field>
@@ -125,12 +125,12 @@
       captchaCode: '',
     })
     const registerForm = ref({
-      username: '',
+      userName: '',
       password: '',
       email: '',
       address: '',
       birthday: null,
-      nickname: '',
+      nickName: '',
     })
     const { usernameRule, passwordRule, captchaCodeRule, emailRule } = rules
     const usernameRules = [usernameRule]
