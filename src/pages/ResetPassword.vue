@@ -82,7 +82,7 @@ async function resetPassword() {
         snackbarColor.value = 'success';
         receiveMessage.value = response.data.message;
         snackbar.value = true;
-        userStore.updatePassword(resetForm.value.password);
+        userStore.userInfo.password = resetForm.value.password
         $router.push('/login');
       } else {
         snackbarColor.value = 'error';

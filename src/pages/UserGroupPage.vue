@@ -139,6 +139,7 @@ async function addGroup() {
   }).catch(() => {
     loading.value = false
   }).finally(() => {
+    dialogAddGroup.value = false
     getGroups()
   })
 }
@@ -167,6 +168,7 @@ async function editGroup() {
   }).catch(() => {
     loading.value = false
   }).finally(() => {
+    dialogEditGroup.value = false
     getGroups()
   })
 }

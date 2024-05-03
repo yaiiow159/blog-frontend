@@ -33,7 +33,7 @@ export const useUserStore = defineStore('user', {
       this.userInfo.username = account;
       this.userInfo.password = password;
       this.userInfo.roles = roles;
-      this.userInfo.loginTime = new Date().toLocaleTimeString();
+      this.userInfo.loginTime = new Date().toLocaleTimeString('zh-TW', { hour12: false });
       this.isLoggedIn = true;
       this.userInfo.token = token;
     },

@@ -3,11 +3,9 @@ import axiosInstance from "@/utils/request";
 import { ref, onMounted } from 'vue';
 import {useUserStore} from "@/stores/user";
 
-_
-
 const breadcrumbs = ref([
   { text: '首頁', disabled: false, href: '/home' },
-  { text: '郵件通知紀錄', disabled: true, href: '/notifications' },
+  { text: '使用者登入紀錄', disabled: true, href: '/loginRecords' },
 ])
 const userStore = useUserStore()
 const loading = ref(false)
@@ -15,51 +13,54 @@ const snackbar = ref(false)
 const snackbarColor = ref('')
 const receiveMessage = ref('')
 const search = ref({
-  name: '',
-  email: '',
-  subject: '',
-  isRead: '',
+  username: '',
+  ipAddress: '',
+  action: '',
 })
+const actions = [
+
+]
 const pageable = ref({
   totalElements: Number(0),
   totalPages: Number(0),
   pageNumber: Number(1),
   pageSize: Number(10)
 })
-const notifications = ref([])
+const loginRecords = ref([])
 const dialogViewNotification = ref(false)
 const headers = [
   { title: '序號', key: 'id', sortable: true},
-  { title: '名稱', key: 'name', sortable: true},
-  { title: '信箱', key: 'email', sortable: false},
-  { title: '主旨', key: 'subject', sortable: true},
-  { title: '內容', key: 'content', sortable: false},
-  { title: '發布時間', key: 'createDate',sortable: true},
+  { title: '使用者名稱', key: 'username', sortable: true},
+  { title: 'IP位址', key: 'ipAddress', sortable: false},
+  { title: '執行動作', key: 'action', sortable: true},
+  { title: '登入時間', key: 'loginTimestamp',sortable: true},
+  { title: '登出時間', key: 'logoutTimestamp',sortable: true},
   { title: '操作', key: 'actions',sortable: false},
 ]
-const notification = ref({
+const loginRecord = ref({
   id: Number(''),
-  name: '',
-  email: '',
-  subject: '',
-  content: ''
+  username: '',
+  ipAddress: '',
+  action: '',
+  loginTimestamp: null,
+  logoutTimestamp: null,
+  userAgent: '',
 })
 onMounted(async () => {
-  await getNotifications()
+  await getLoginRecords()
 })
-async function getNotifications() {
+async function getLoginRecords() {
   loading.value = true
-  await axiosInstance.get('/notifications/' + userStore.userInfo.username, {params: {
-      name: search.value.name,
-      email: search.value.email,
-      subject: search.value.subject,
-      isRead: search.value.isRead,
+  await axiosInstance.get('/loginRecords/' + userStore.userInfo.username, {params: {
+      username: search.value.username,
+      ipAddress: search.value.ipAddress,
+      action: search.value.action,
       page: pageable.value.pageNumber,
       pageSize: pageable.value.pageSize
     }}).then((response) => {
     const apiResponse = response.data;
     if (apiResponse.result) {
-      notifications.value = apiResponse.data.content
+      loginRecords.value = apiResponse.data.content
       pageable.value.totalPages = apiResponse.data.totalPages
       pageable.value.totalElements = apiResponse.data.totalElements
       pageable.value.pageNumber = apiResponse.data.number + 1
@@ -76,12 +77,12 @@ async function getNotifications() {
   })
 }
 
-async function getNotification(id) {
+async function getLoginRecord(id) {
   loading.value = true
-  await axiosInstance.get('/notifications/' + Number(id)).then((response) => {
+  await axiosInstance.get('/loginRecords/' + Number(id)).then((response) => {
     const apiResponse = response.data;
     if(apiResponse.result) {
-      notification.value = apiResponse.data
+      loginRecord.value = apiResponse.data
       loading.value = false
     }
   }).catch(() => {
@@ -89,18 +90,21 @@ async function getNotification(id) {
   })
 }
 
-function viewNotification(id) {
-  getNotification(id)
+function viewLoginRecord(id) {
+  resetLoginRecord()
+  getLoginRecord(id)
   dialogViewNotification.value = true
 }
 
-function resetNotification() {
-  notification.value = {
+function resetLoginRecord() {
+  loginRecord.value = {
     id: Number(''),
-    name: '',
-    email: '',
-    subject: '',
-    content: ''
+    username: '',
+    ipAddress: '',
+    action: '',
+    loginTimestamp: null,
+    logoutTimestamp: null,
+    userAgent: ''
   }
 }
 </script>
@@ -118,12 +122,12 @@ function resetNotification() {
   <v-card flat full-width>
     <v-card-title class="d-flex align-center pe-2">
       <v-icon icon="mdi-folder"></v-icon> &nbsp;
-      分類管理頁面
+      使用者登入紀錄頁面
       <v-spacer></v-spacer>
       <v-text-field
-          v-model="search.name"
+          v-model="search.username"
           density="compact"
-          label="名稱"
+          label="使用者名稱"
           prepend-inner-icon="mdi-magnify"
           variant="solo-filled"
           flat
@@ -132,52 +136,40 @@ function resetNotification() {
       ></v-text-field>
       <v-text-field
           class="ml-2"
-          v-model="search.email"
+          v-model="search.ipAddress"
           density="compact"
-          label="信箱"
+          label="IP位址"
           prepend-inner-icon="mdi-magnify"
           variant="solo-filled"
           flat
           hide-details
           single-line
       ></v-text-field>
-      <v-text-field
-          class="ml-2"
-          v-model="search.subject"
-          density="compact"
-          label="標題"
-          prepend-inner-icon="mdi-magnify"
-          variant="solo-filled"
-          flat
-          hide-details
-          single-line
-      ></v-text-field>
-      <v-radio-group class="ml-2" v-model="search.isRead">
-        <v-radio>
+        <v-select class="ml-2" v-model="search.action" density="compact" label="執行動作" variant="solo-filled" flat hide-details>
           <template v-slot:label>
-            <div>全部</div>
+            執行動作
           </template>
-        </v-radio>
-        <v-radio value="true">
-          <template v-slot:label>
-            <div>已讀</div>
-          </template>
-        </v-radio>
-        <v-radio value="false">
-          <template v-slot:label>
-            <div>未讀</div>
-          </template>
-        </v-radio>
-      </v-radio-group>
+          <v-list>
+            <v-list-item
+                v-for="item in actions"
+                :title="item"
+                :value="item"
+            ></v-list-item>
+          </v-list>
+        </v-select>
       <v-divider class="mx-2" inset vertical></v-divider>
-      <v-btn :bordered="false" color="search" class="mr-2 outlined" size="large" density="compact" @click="getNotifications">查詢</v-btn>
+      <v-btn :bordered="false" color="search" class="mr-2 outlined" size="large" density="compact" @click="getLoginRecords">查詢</v-btn>
     </v-card-title>
     <v-data-table multi-sort
-                  :sort-by="[{ key: 'name', order: 'asc'}, { key: 'id', order: 'asc'}]"
+                  :sort-by="[
+                  { key: 'username', order: 'asc'},
+                  { key: 'id', order: 'asc'},
+                  { key: 'loginTimestamp', order: 'asc'},
+                  { key: 'logoutTimestamp', order: 'asc'}]"
                   :headers="headers"
                   :loading="loading"
                   loading-text="載入資料中..."
-                  :items="notifications"
+                  :items="loginRecords"
                   :items-per-page="pageable.pageSize"
                   height="calc(100vh - 300px)">
       <template v-slot:top>
@@ -186,7 +178,7 @@ function resetNotification() {
         </v-toolbar>
       </template>
       <template v-slot:item.actions="{ item }">
-        <v-btn  class="mr-2 outlined" density="compact" color="edit" @click="viewNotification(item.id)">查看詳情</v-btn>
+        <v-btn  class="mr-2 outlined" density="compact" color="edit" @click="viewLoginRecord(item.id)">查看詳情</v-btn>
       </template>
       <template v-slot:bottom>
         <div class="text-center pt-2">
@@ -194,7 +186,7 @@ function resetNotification() {
               v-model="pageable.pageNumber"
               :length="pageable.totalPages"
               total-visible="5"
-              @update:modelValue="getNotifications"
+              @update:modelValue="getLoginRecords"
               rounded="circle"
               density="compact"
           ></v-pagination>
@@ -216,36 +208,36 @@ function resetNotification() {
                 sm="6"
                 md="4"
             >
-              名稱:
+              使用者名稱:
               <v-text-field
-                  v-model="notification.name"
-                  label="名稱"
+                  v-model="loginRecord.username"
+                  label="使用者名稱"
                   readonly
               ></v-text-field>
             </v-col>
             <v-col
                 cols="12">
-              信箱:
+              IP位址:
               <v-text-field
-                  v-model="notification.email"
-                  label="信箱"
+                  v-model="loginRecord.ipAddress"
+                  label="IP位址"
                   readonly
               ></v-text-field>
             </v-col>
             <v-col
                 cols="12">
-              主旨:
+              執行動作:
               <v-text-field
-                  v-model="notification.subject"
+                  v-model="loginRecord.action"
                   label="標題"
                   readonly
               ></v-text-field>
             </v-col>
             <v-col
                 cols="12">
-              內文:
+              瀏覽器資訊:
               <v-text-field
-                  v-model="notification.content"
+                  v-model="loginRecord.userAgent"
                   label="內文"
                   readonly
               ></v-text-field>

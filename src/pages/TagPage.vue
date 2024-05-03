@@ -69,7 +69,7 @@
   }).catch(() => {
     loading.value = false
   }).finally(() => {
-  })
+    })
   }
 
   async function getTag(id) {
@@ -77,7 +77,7 @@
     await axiosInstance.get('/tags/' + Number(id)).then((response) => {
       const apiResponse = response.data;
       if(apiResponse.result) {
-        tag.value = apiResponse.data.data
+        tag.value = apiResponse.data
         loading.value = false
       } else {
         loading.value = false
@@ -134,6 +134,7 @@
     }).catch(() => {
       loading.value = false
     }).finally(() => {
+      dialogAddTag.value = false
       getTags()
     })
   }
@@ -161,6 +162,7 @@
     }).catch(() => {
       loading.value = false
     }).finally(() => {
+      dialogEditTag.value = false
       getTags()
     })
   }

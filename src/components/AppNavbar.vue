@@ -14,13 +14,13 @@
   const userStore = useUserStore();
   const { usernameRule, passwordRule, emailRule } = rules
 
-  const valid = ref(false);
+
   const imageUrl = ref(null);
   const dialogUserProfile = ref(false);
   const dialogContact = ref(false)
   const dialogPassword = ref(false)
   const notificationCount = ref(0)
-  const userProfile = reactive({
+  const userProfile = ref({
     id: Number(''),
     username: '',
     email: '',
@@ -91,8 +91,8 @@
       username: '',
       email: '',
       address: '',
-      birthday: Date.now(),
-      avatar: Blob(''),
+      birthday: null,
+      avatar: null,
       password: '',
       nickname: '',
     }
@@ -124,7 +124,7 @@
 
 
   function handlePassword() {
-    let result = rules.confirmPasswordRule(passwordForm.value.newPassword, passwordForm.value.confirmPassword)
+    let result = rules.confirmPasswordRule(passwordForm.value.newPassword, passwordForm.value.oldPassword)
     if(result === true) {
       handleChangePassword(passwordForm.value)
     } else {
@@ -139,7 +139,9 @@
   }
 
   function openNotification() {
-    $router.push('/notification')
+    $router.push(
+      { name: 'Notification' }
+    )
   }
 
   async function notificationCounting() {
@@ -225,7 +227,7 @@
     formData.append('email', userProfile.value.email);
     formData.append('address', userProfile.value.address);
 
-    axiosInstance.put(`/userProfile`, formData).then((response) => {
+    axiosInstance.put(`/users/userProfile`, formData).then((response) => {
       const apiResponse = response.data
       if(apiResponse.result) {
         receiveMessage.value = apiResponse.message
@@ -281,7 +283,7 @@
   async function handleContact() {
     loading.value = true
     await axiosInstance.post('/communicate/contact', {
-      name: contactForm.value.fromUser,
+      fromUser: contactForm.value.fromUser,
       email: contactForm.value.email,
       message: contactForm.value.message
     }).then((response) => {
@@ -394,20 +396,17 @@
 
   <v-dialog v-model="dialogPassword" persistent max-width="300px">
     <v-card class="rounded-xl pa-5">
-      <v-form ref="passwordForm" lazy-validation>
         <v-card-title class="text-h5">修改密碼</v-card-title>
         <v-card-text>
           <v-text-field
             v-model="passwordForm.oldPassword"
             label="舊密碼"
             required
-            :rules="passwordRule"
           ></v-text-field>
           <v-text-field
             v-model="passwordForm.newPassword"
             label="新密碼"
             required
-            :rules="passwordRule"
           ></v-text-field>
         </v-card-text>
         <v-card-actions>
@@ -415,13 +414,11 @@
           <v-btn color="edit" text="送出" @click="handlePassword">送出</v-btn>
           <v-btn color="cancel" text="取消" @click="dialogPassword = false">取消</v-btn>
         </v-card-actions>
-      </v-form>
     </v-card>
   </v-dialog>
 
   <v-dialog v-model="dialogContact" persistent max-width="500">
     <v-card class="rounded-xl pa-5">
-      <v-form ref="contactForm" lazy-validation>
         <v-card-title class="text-h5">聯繫我</v-card-title>
         <v-card-text>留下聯絡方式</v-card-text>
         <v-card-text>
@@ -450,63 +447,59 @@
           <v-btn class="rounded-xl" color="edit" text="送出" @click="handleContact">送出</v-btn>
           <v-btn class="rounded-xl" color="cancel" text="取消" @click="dialogContact = false">取消</v-btn>
         </v-card-actions>
-      </v-form>
     </v-card>
   </v-dialog>
 
   <v-dialog v-model="dialogUserProfile" persistent max-width="600">
     <v-card class="pa-5 rounded-xl">
       <v-card-title class="text-h5">個人資訊</v-card-title>
-      <v-form ref="userProfile" lazy-validation v-model="valid">
         <v-card-text>
           <v-container>
             <v-row>
-              <v-form ref="userProfile" lazy-validation v-model="userProfile">
                 <v-col cols="12" class="text-center">
-                  <v-avatar size="120" class="rounded-xl ma-2" :src="imageUrl">
+                  <v-avatar size="120" class="rounded-xl ma-2" :src="imageUrl" :ref="userProfile.avatar">
                     <span class="text-h5" v-if="!imageUrl">{{ userStore.userInfo.username }}</span>
                   </v-avatar>
                   <v-file-input
                     label="選擇圖片"
                     prepend-icon="mdi-camera"
-                    @change="handleFileChange"
+                    @change="handleFileChange($event.target.files[0])"
                     accept="image/png"
                     variant="solo-filled"
                   ></v-file-input>
                 </v-col>
                 <v-col cols="12">
-                  <v-text-field :rules="usernameRule" v-model="userProfile.username" label="姓名" outlined dense></v-text-field>
-                  <v-text-field :rules="passwordRule" v-model="userProfile.password" label="密碼" type="password" outlined dense></v-text-field>
-                  <v-text-field v-model="userProfile.nickname" label="暱稱" outlined dense></v-text-field>
-                  <v-date-picker v-model="userProfile.birthday" landscape></v-date-picker>
+                  <v-text-field :rules="usernameRule" v-model="userProfile.username"  label="姓名" outlined dense></v-text-field>
+                  <v-text-field :rules="passwordRule" v-model="userProfile.password"  label="密碼" type="password" outlined dense></v-text-field>
+                  <v-text-field v-model="userProfile.nickname"  label="暱稱" outlined dense></v-text-field>
+                  <v-date-picker v-model="userProfile.birthday"  landscape></v-date-picker>
                   <v-text-field :rules="emailRule" v-model="userProfile.email" label="電子郵件" outlined dense></v-text-field>
-                  <v-text-field v-model="userProfile.address" label="地址" outlined dense></v-text-field>
+                  <v-text-field v-model="userProfile.address" label="地址" :model-value="userProfile.address" outlined dense></v-text-field>
                 </v-col>
-              </v-form>
             </v-row>
             <v-row class="my-2">
               <v-col cols="6" md="3">
                 <v-card class="pa-2 text-center">
                   <div class="subtitle-2">評論總數</div>
-                  <div class="text-h6">{{ userRecord.commentCount }}</div>
+                  <div class="text-h6">{{ userRecord.commentCount ? userRecord.commentCount : 0 }}</div>
                 </v-card>
               </v-col>
               <v-col cols="6" md="3">
                 <v-card class="pa-2 text-center">
                   <div class="subtitle-2">評論按讚總數</div>
-                  <div class="text-h6">{{ userRecord.commentLikeCount }}</div>
+                  <div class="text-h6">{{ userRecord.commentLikeCount ? userRecord.commentLikeCount : 0 }}</div>
                 </v-card>
               </v-col>
               <v-col cols="6" md="3">
                 <v-card class="pa-2 text-center">
                   <div class="subtitle-2">文章總數</div>
-                  <div class="text-h6">{{ userRecord.articleCount }}</div>
+                  <div class="text-h6">{{ userRecord.articleCount ? userRecord.articleCount : 0 }}</div>
                 </v-card>
               </v-col>
               <v-col cols="6" md="3">
                 <v-card class="pa-2 text-center">
                   <div class="subtitle-2">文章按讚總數</div>
-                  <div class="text-h6">{{ userRecord.articleLikeCount }}</div>
+                  <div class="text-h6">{{ userRecord.articleLikeCount ? userRecord.articleLikeCount : 0 }}</div>
                 </v-card>
               </v-col>
             </v-row>
@@ -517,7 +510,6 @@
           <v-btn color="edit" text="編輯" @click="updateProfile">編輯</v-btn>
           <v-btn color="cancel" text="取消" @click="dialogUserProfile = false">關閉</v-btn>
         </v-card-actions>
-      </v-form>
     </v-card>
   </v-dialog>
 

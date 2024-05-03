@@ -92,7 +92,7 @@
 
     function resetCategory() {
         category.value = {
-            id: '',
+            id: Number(''),
             name: '',
             description: ''
         }
@@ -107,7 +107,6 @@
             loading.value = true
             const apiResponse = response.data
             if(apiResponse.result) {
-               category.value = apiResponse.data
                dialogAddCategory.value = false
             } else {
                snackbarColor.value = 'error'
@@ -118,7 +117,7 @@
             loading.value = false
         }).finally(() => {
             loading.value = false
-           getCategories()
+            getCategories()
         })
     }
 
@@ -130,7 +129,6 @@
            loading.value = true
            const apiResponse = response.data
            if(apiResponse.result) {
-              category.value = apiResponse.data
               dialogEditCategory.value = false
            } else {
               snackbarColor.value = 'error'

@@ -43,8 +43,18 @@
     categoryId: Number(''),
     tagIds: [],
   })
-  const tags = ref([])
-  const categories = ref([])
+  const tags = ref([
+    {
+      id: Number(''),
+      name: '',
+    }
+  ])
+  const categories = ref([
+    {
+      id: Number(''),
+      name: '',
+    }
+  ])
   const headers = [
     { title: '標題', key: 'title', sortable: true },
     { title: '作者', key: 'authorName', sortable: true},
@@ -60,8 +70,21 @@
     await getTags()
   })
 
+  function viewArticle(id) {
+    getArticle(id)
+    router.push('/articles/' + id)
+  }
+
   function resetArticle() {
-    article.value = {}
+    article.value = {
+      id: Number(''),
+      title: '',
+      authorName: '',
+      content: '',
+      description: '',
+      status: '',
+      categoryId: Number(''),
+    }
   }
 
   function handleEditArticle(id) {
@@ -76,6 +99,7 @@
   }
 
   async function getArticles() {
+    loading.value = true;
     await axiosInstance.get("/posts", {params:
       {
         title: search.value.title,
@@ -84,9 +108,8 @@
         pageSize: pageable.value.pageSize
       }
     }).then((response) => {
-      loading.value = true;
       const apiResponse = response.data
-      if(apiResponse.data.result) {
+      if(apiResponse.result) {
         articles.value = apiResponse.data.content
         pageable.value.totalPages = apiResponse.data.totalPages
         pageable.value.totalElements = apiResponse.data.totalElements
@@ -95,10 +118,9 @@
         loading.value = false
       } else {
         loading.value = false
-        article.value = {}
         snackbarColor.value = 'error'
         snackbar.value = true
-        receiveMessage.value = apiResponse.data.message
+        receiveMessage.value = apiResponse.message
       }
     }).catch(() => {
       loading.value = false
@@ -113,7 +135,6 @@
         article.value = apiResponse.data
       } else {
         loading.value = false
-        article.value = {}
         snackbarColor.value = 'error'
         snackbar.value = true
         receiveMessage.value = apiResponse.message
@@ -140,7 +161,7 @@
   async function getCategories() {
     await axiosInstance.get('/categories/findList').then((response) => {
       const apiResponse = response.data
-      if(apiResponse.data.result) {
+      if(apiResponse.result) {
         categories.value = apiResponse.data
       }else {
         snackbarColor.value = 'error'
@@ -249,6 +270,7 @@
         文章管理頁面
         <v-spacer></v-spacer>
           <v-select
+              class="me-2 mb-2"
               v-model="search.status"
               density="compact"
               label="儲存狀態"
@@ -323,11 +345,7 @@
             <v-container>
               <v-row >
               <v-col cols="12">
-              <v-file-input accept="image/png" v-model="article.image" label="輸入圖片">
-                <template v-slot:prepend>
-                  <v-icon icon="mdi-paperclip"></v-icon>
-                </template>
-              </v-file-input>
+              <v-file-input accept="image/png" v-model="article.image" label="輸入圖片"></v-file-input>
               </v-col>
               </v-row>
               <v-row>

@@ -19,13 +19,10 @@ const dialogEditUser = ref(false)
 const headers = [
   { title: '序號', key: 'id', sortable: true},
   { title: '名稱', key: 'userName', sortable: true },
-  { title: '密碼', key: 'password', sortable: false,type:'password'},
+  { title: '密碼', key: 'password', sortable: false},
   { title: '電子郵件', key: 'email',sortable: true },
-  { title: '暱稱', key: 'nickName',sortable: true },
-  { title: '出生年月日', key: 'birthday',sortable: true },
-  { title: '地址', key: 'address',sortable: false },
-  { title: '電話', key: 'phone', sortable: false },
-  { title: '角色', key: 'roles', sortable: false },
+  { title: '角色', key: 'roleNames', sortable: false },
+  { title: '群組', key: 'groupName', sortable: false },
   { title: '狀態', key: 'status', sortable: true },
   { title: '發布時間', key: 'createDate', sortable: true },
   { title: '更新時間', key: 'updateDate',sortable: true },
@@ -206,6 +203,7 @@ async function addUser() {
   }).catch(() => {
     loading.value = false
   }).finally(() => {
+    dialogAddUser.value = false
     getUsers()
   })
 }
@@ -227,6 +225,7 @@ async function editUser() {
   }).catch(() => {
     loading.value = false
   }).finally(() => {
+    dialogEditUser.value = false
     getUsers()
   })
 }

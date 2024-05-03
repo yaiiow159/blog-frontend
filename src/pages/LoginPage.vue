@@ -37,7 +37,7 @@
   </div>
 
   <v-dialog v-model="forgotPasswordDialog" persistent max-width="600px">
-    <v-card :loading="loading" class="pa-5 rounded-xl">
+    <v-card :loading="dialogLoading" class="pa-5 rounded-xl">
       <v-card-title class="text-h5">忘記密碼</v-card-title>
       <v-card-text>
         <v-container>
@@ -58,14 +58,13 @@
 
   <!-- 註冊dialog -->
   <v-dialog v-model="signUpDialog" persistent max-width="600px">
-    <v-card :loading="loading" class="pa-5 rounded-xl">
+    <v-card :loading="dialogLoading" class="pa-5 rounded-xl">
       <v-card-title class="text-h5">
         註冊
       </v-card-title>
       <v-card-text>
         <v-container>
           <v-row>
-            <v-form ref="signUpForm" lazy-validation>
             <v-col cols="12">
               <v-text-field v-model="registerForm.username" label="姓名" prepend-icon="mdi-account" type="text" required :rules="usernameRules" clearable></v-text-field>
             </v-col>
@@ -81,7 +80,6 @@
             <v-col cols="12">
               <v-text-field v-model="registerForm.address" label="地址" prepend-icon="mdi-map-marker" type="text" clearable></v-text-field>
             </v-col>
-            </v-form>
           </v-row>
         </v-container>
       </v-card-text>
@@ -119,6 +117,7 @@
     const loading = ref(false)
     const signUpDialog = ref(false)
     const router = useRouter()
+    const dialogLoading = ref(false)
 
     const loginForm = ref({
       username: '',
@@ -230,7 +229,7 @@
           userStore.login(userInfo)
           router.push({ name: 'Home' })
         }
-      }).catch(error => {
+      }).catch(() => {
         loading.value = false
       })
     }

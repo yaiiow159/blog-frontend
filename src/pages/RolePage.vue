@@ -122,6 +122,7 @@ async function addRole() {
   }).catch(() => {
     loading.value = false
   }).finally(() => {
+    dialogAddRole.value = false
     getRoles()
   })
 }
@@ -149,6 +150,7 @@ async function editRole() {
   }).catch(() => {
     loading.value = false
   }).finally(() => {
+    dialogEditRole.value = false
     getRoles()
   })
 }
