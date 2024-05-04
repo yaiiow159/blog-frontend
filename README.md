@@ -1,80 +1,35 @@
 # 部落格系統
-使用vuetify + vue3 搭配搭建的部落格前端系統,採取前後端分離,可供一般使用者進行文章新增,編輯,閱讀等功能
+使用vuetify + vue3 + pinia + router搭配搭建的部落格前端系統,採取前後端分離,可供一般使用者進行文章新增,編輯,閱讀等功能
 瀏覽評論並撰寫留言給文章,給文章進行收藏按讚,與後端進行權限控管,依照使用者賦予的權限可使用對應功能,管理員可以對系統進行更多功能操作
 如使用者管理,權限管理,群組管理等
 
-## ❗️ Important Links
+## 💿 系統相關操作
 
-- 📄 [Docs](https://vuetifyjs.com/)
-- 🚨 [Issues](https://issues.vuetifyjs.com/)
-- 🏬 [Store](https://store.vuetifyjs.com/)
-- 🎮 [Playground](https://play.vuetifyjs.com/)
-- 💬 [Discord](https://community.vuetifyjs.com)
+| 部屬相關                                                    | 安裝             | 命令  (啟動)      | 部屬              |
+|---------------------------------------------------------|----------------|---------------|-----------------|
+| [yarn](https://yarnpkg.com/getting-started)             | `yarn install` | `yarn dev`    | `　yarn build`   |
+| [npm](https://docs.npmjs.com/cli/v7/commands/npm-install) | `npm install`  | `npm run dev` | `npm run build` |
 
-## 💿 Install
+## ✨ 功能
+- 權限管理 - 使用pinia搭配後端資訊 管理頁面展示功能項
+- 修改密碼 - 修改使用者密碼
+- 個人資訊 - 瀏覽個人使用者資訊 以及編輯等
+- 文章管理 - 對文章進行新增,編輯,閱讀等功能 (使用者只能編輯個人新增文章)
+- 評論列表 - 使用者可以查看美篇文章下的評論列表,並且可新增/檢舉/編輯評論
+- 分類管理 - 新增/編輯/刪除/查看 分類 (管理員使用)
+- 標籤管理 - 新增/編輯/刪除/查看 標籤 (管理員使用)
+- 使用者管理 - 新增/編輯/刪除/查看/禁用/開放 使用者 (管理員使用)
+- 群組管理 - 新增/編輯/刪除/查看 群組 (管理員使用)
+- 權限管理 - 新增/編輯/刪除/查看 權限 (管理員使用)
+- 瀏覽紀錄 - 查看個人觀看文章的瀏覽紀錄 
+- 郵件通知紀錄 - 針對被收藏文章的作者 可接收到郵件通知,並可在前端頁面查看紀錄
 
-Set up your project using your preferred package manager. Use the corresponding command to install the dependencies:
+#### 欲添加功能 <br>
+- 統計分析 - 以圖表分析文章月新增量,年新增量等
+- 作者追蹤 - 追蹤作者且該作者文章新增更動時可透過郵件通知發送 
 
-| Package Manager                                                | Command        |
-|---------------------------------------------------------------|----------------|
-| [yarn](https://yarnpkg.com/getting-started)                   | `yarn install` |
-| [npm](https://docs.npmjs.com/cli/v7/commands/npm-install)     | `npm install`  |
-| [pnpm](https://pnpm.io/installation)                          | `pnpm install` |
-| [bun](https://bun.sh/#getting-started)                        | `bun install`  |
-
-After completing the installation, your environment is ready for Vuetify development.
-
-## ✨ Features
-
-- 🖼️ **Optimized Front-End Stack**: Leverage the latest Vue 3 and Vuetify 3 for a modern, reactive UI development experience. [Vue 3](https://v3.vuejs.org/) | [Vuetify 3](https://vuetifyjs.com/en/)
-- 🗃️ **State Management**: Integrated with [Pinia](https://pinia.vuejs.org/), the intuitive, modular state management solution for Vue.
-- 🚦 **Routing and Layouts**: Utilizes Vue Router for SPA navigation and vite-plugin-vue-layouts for organizing Vue file layouts. [Vue Router](https://router.vuejs.org/) | [vite-plugin-vue-layouts](https://github.com/JohnCampionJr/vite-plugin-vue-layouts)
-- ⚡ **Next-Gen Tooling**: Powered by Vite, experience fast cold starts and instant HMR (Hot Module Replacement). [Vite](https://vitejs.dev/)
-- 🧩 **Automated Component Importing**: Streamline your workflow with unplugin-vue-components, automatically importing components as you use them. [unplugin-vue-components](https://github.com/antfu/unplugin-vue-components)
-
-These features are curated to provide a seamless development experience from setup to deployment, ensuring that your Vuetify application is both powerful and maintainable.
-
-## 💡 Usage
-
-This section covers how to start the development server and build your project for production.
-
-### Starting the Development Server
-
-To start the development server with hot-reload, run the following command. The server will be accessible at [http://localhost:3000](http://localhost:3000):
-
-```bash
-yarn dev
-```
-
-(Repeat for npm, pnpm, and bun with respective commands.)
-
-> Add NODE_OPTIONS='--no-warnings' to suppress the JSON import warnings that happen as part of the Vuetify import mapping. If you are on Node [v21.3.0](https://nodejs.org/en/blog/release/v21.3.0) or higher, you can change this to NODE_OPTIONS='--disable-warning=5401'. If you don't mind the warning, you can remove this from your package.json dev script.
-
-### Building for Production
-
-To build your project for production, use:
-
-```bash
-yarn build
-```
-
-(Repeat for npm, pnpm, and bun with respective commands.)
-
-Once the build process is completed, your application will be ready for deployment in a production environment.
-
-## 💪 Support Vuetify Development
-
-This project is built with [Vuetify](https://vuetifyjs.com/en/), a UI Library with a comprehensive collection of Vue components. Vuetify is an MIT licensed Open Source project that has been made possible due to the generous contributions by our [sponsors and backers](https://vuetifyjs.com/introduction/sponsors-and-backers/). If you are interested in supporting this project, please consider:
-
-- [Requesting Enterprise Support](https://support.vuetifyjs.com/)
-- [Sponsoring John on Github](https://github.com/users/johnleider/sponsorship)
-- [Sponsoring Kael on Github](https://github.com/users/kaelwd/sponsorship)
-- [Supporting the team on Open Collective](https://opencollective.com/vuetify)
-- [Becoming a sponsor on Patreon](https://www.patreon.com/vuetify)
-- [Becoming a subscriber on Tidelift](https://tidelift.com/subscription/npm/vuetify)
-- [Making a one-time donation with Paypal](https://paypal.me/vuetify)
-
-## 📑 License
-[MIT](http://opensource.org/licenses/MIT)
-
-Copyright (c) 2016-present Vuetify, LLC
+## 📑 聯繫我
+[GITHUB](https://github.com/yaiiow159) <br>
+[LINKEDIN](https://www.linkedin.com/in/timmy-chung-46a132289/)<br>
+[CAKERESUME](https://www.cakeresume.com/me/examyou076) <br>
+#### phone: 0920778600  
