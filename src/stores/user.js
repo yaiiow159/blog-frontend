@@ -3,7 +3,6 @@ import { defineStore } from 'pinia';
 
 export const useUserStore = defineStore('user', {
   state: () => ({
-    // 用户的基本信息
     userInfo: {
       username: null,
       password: null,
@@ -14,21 +13,17 @@ export const useUserStore = defineStore('user', {
     isLoggedIn: false,
   }),
   getters: {
-    // 用户是否登录
     isLogin(state) {
       return state.isLoggedIn;
     },
-    // 用户的角色
     getRoles(state) {
       return state.userInfo.roles;
     },
-    // 用户的基本信息
     getUserInfo(state) {
       return state.userInfo;
     },
   },
   actions: {
-    // 登录用户
     login({ account, password, roles, token }) {
       this.userInfo.username = account;
       this.userInfo.password = password;

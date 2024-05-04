@@ -150,6 +150,7 @@
       const apiResponse = response.data
       if(apiResponse.result) {
         tags.value = apiResponse.data
+        console.log(tags.value)
       }else {
         snackbarColor.value = 'error'
         receiveMessage.value = apiResponse.message
@@ -452,19 +453,11 @@
                   </v-select>
                 </v-col>
                 <v-col cols="6">
-                  <v-select multiple v-model="article.tagIds" :items="tags" item-title="name" item-value="id" label="標籤">
+                  <v-select multiple v-model="article.tagIds" :items="tags"
+                            :item-title="item => item.name"
+                            :item-value="item => item.id" label="標籤">
                     <template v-slot:prepend>
                       <v-icon icon="mdi-tag-multiple-outline"></v-icon>
-                    </template>
-                    <template v-slot:item="{ item }">
-                      <v-chip class="mx-1" color="primary" label>
-                        {{ item.name }}
-                      </v-chip>
-                    </template>
-                    <template v-slot:selection="{ item }">
-                      <v-chip class="mx-1" color="primary" label>
-                        {{ item.name }}
-                      </v-chip>
                     </template>
                   </v-select>
                 </v-col>

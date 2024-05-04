@@ -1,6 +1,7 @@
-# Vuetify (Default)
-
-This is the official scaffolding tool for Vuetify, designed to give you a head start in building your new Vuetify application. It sets up a base template with all the necessary configurations and standard directory structure, enabling you to begin development without the hassle of setting up the project from scratch.
+# 部落格系統
+使用vuetify + vue3 搭配搭建的部落格前端系統,採取前後端分離,可供一般使用者進行文章新增,編輯,閱讀等功能
+瀏覽評論並撰寫留言給文章,給文章進行收藏按讚,與後端進行權限控管,依照使用者賦予的權限可使用對應功能,管理員可以對系統進行更多功能操作
+如使用者管理,權限管理,群組管理等
 
 ## ❗️ Important Links
 

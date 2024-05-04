@@ -122,7 +122,7 @@ function resetNotification() {
   <v-card flat full-width>
     <v-card-title class="d-flex align-center pe-2">
       <v-icon icon="mdi-folder"></v-icon> &nbsp;
-      分類管理頁面
+      郵件通知頁面
       <v-spacer></v-spacer>
       <v-text-field
           v-model="search.name"
@@ -156,17 +156,9 @@ function resetNotification() {
           hide-details
           single-line
       ></v-text-field>
-      <v-select class="ml-2" v-model="search.isRead" density="compact" label="是否已讀" variant="solo-filled" flat hide-details>
-        <template v-slot:label>
-          是否已讀
-        </template>
-        <v-list>
-          <v-list-item
-              v-for="item in isReads"
-              :title="item.text"
-              :value="item.value"
-          ></v-list-item>
-        </v-list>
+      <v-select class="ml-2" v-model="search.isRead" density="compact" label="是否已讀" variant="solo-filled"
+                flat hide-details
+                single-line :items="isReads" :item-title="item => item.text" :item-value="item => item.value">
       </v-select>
       <v-divider class="mx-2" inset vertical></v-divider>
       <v-btn :bordered="false" color="search" class="mr-2 outlined" size="large" density="compact" @click="getNotifications">查詢</v-btn>
@@ -181,7 +173,7 @@ function resetNotification() {
                   height="calc(100vh - 300px)">
       <template v-slot:top>
         <v-toolbar flat>
-          <v-toolbar-title>分頁列表</v-toolbar-title>
+          <v-toolbar-title>郵件通知列表</v-toolbar-title>
         </v-toolbar>
       </template>
       <template v-slot:item.actions="{ item }">

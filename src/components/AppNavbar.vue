@@ -18,7 +18,7 @@
   const passwordRuleRef = [passwordRule]
   const emailRuleRef = [emailRule]
 
-  const imageUrl = ref(null);
+  const imageUrl = ref('');
   const imageName = ref('');
   const imageFile = ref(null);
   const dialogUserProfile = ref(false);
@@ -139,7 +139,7 @@
     }
   }
   // 判斷是否登入才開始count通知數
-  if(userStore.userInfo.token) {
+  if(userStore.getUserInfo.token !== null) {
     setInterval(function () {notificationCounting()}, 50000)
   }
 
@@ -226,16 +226,10 @@
       if (result.isConfirmed) {
         await axiosInstance.post('/auth/logout').then((response) => {
           loading.value = false
-          const apiResponse = response.data
-          if(apiResponse.result) {
-            receiveMessage.value = apiResponse.message
-            snackbarColor.value = 'success'
-            snackbar.value = true
+          if(response.data === '登出成功') {
             userStore.logout()
-            $router.push({name: 'Login'})
+            router.push('/')
           }
-        }).catch(error => {
-          loading.value = false
         })
       }
     })

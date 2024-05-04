@@ -228,6 +228,11 @@
           const userInfo = apiResponse.data
           userStore.login(userInfo)
           router.push({ name: 'Home' })
+        } else {
+          loading.value = false
+          snackbarColor.value = 'error'
+          snackbar.value = true
+          receiveMessage.value = apiResponse.message
         }
       }).catch(() => {
         loading.value = false
@@ -245,6 +250,11 @@
           receiveMessage.value = apiResponse.message
           signUpDialog.value = false
           router.push({ name: 'Login' })
+        } else {
+          loading.value = false
+          snackbarColor.value = 'error'
+          snackbar.value = true
+          receiveMessage.value = apiResponse.message
         }
       }).catch(error => {
         loading.value = false
