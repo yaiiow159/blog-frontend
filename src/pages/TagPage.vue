@@ -26,6 +26,7 @@
   const headers = [
     { title: '序號', key: 'id', sortable: true},
     { title: '名稱', key: 'name', sortable: true },
+    { title: '分類', key: 'categoryName', sortable: true },
     { title: '描述', key: 'description', sortable: false },
     { title: '發布時間', key: 'createDate',sortable: true },
     { title: '更新時間', key: 'updateDate',sortable: true },
@@ -34,15 +35,38 @@
   const tag = ref({
     id: Number(''),
     name: '',
-    description: ''
+    description: '',
+    categoryId: Number(''),
+    categoryName: '',
   })
   const tags = ref([])
+  const categories = ref([])
   const dialogAddTag = ref(false)
   const dialogEditTag = ref(false)
 
   onMounted(async () => {
     await getTags()
+    await getCategories()
   })
+
+  async function getCategories() {
+    loading.value = true
+    await axiosInstance.get('/categories/findList').then((response) => {
+    const apiResponse = response.data;
+    if(apiResponse.result) {
+      categories.value = apiResponse.data
+      loading.value = false
+    } else {
+      loading.value = false
+      snackbarColor.value = 'error'
+      receiveMessage.value = apiResponse.message
+      snackbar.value = true
+    }
+  }).catch(() => {
+    loading.value = false
+  }).finally(() => {
+    })
+  }
   async function getTags() {
     loading.value = true
     await axiosInstance.get('/tags', {params:
@@ -78,7 +102,9 @@
       const apiResponse = response.data;
       if(apiResponse.result) {
         tag.value = apiResponse.data
+        tag.value.categoryId = apiResponse.data.category.id
         loading.value = false
+        console.log(tag.value)
       } else {
         loading.value = false
         snackbarColor.value = 'error'
@@ -111,20 +137,26 @@
     }
   }
 
+  function formateCategoryName(category) {
+    if(category) {
+      return category.name
+    }
+  }
+
   async function addTag() {
     await axiosInstance.post('/tags', {
       name: tag.value.name,
-      description: tag.value.description
+      description: tag.value.description,
+      categoryId: tag.value.categoryId
     }).then((response) => {
       loading.value = true
       const apiResponse = response.data
       if(apiResponse.result) {
-        tag.value = apiResponse.data.data
         snackbarColor.value = 'success'
         receiveMessage.value = apiResponse.message
         snackbar.value = true
-        dialogAddTag.value = false
         loading.value = false
+        dialogAddTag.value = false
       } else {
         loading.value = false
         snackbarColor.value = 'error'
@@ -134,24 +166,24 @@
     }).catch(() => {
       loading.value = false
     }).finally(() => {
-      dialogAddTag.value = false
       getTags()
     })
   }
 
   async function editTag() {
-    await axiosInstance.put('/tags/' +Number(tag.value.id), {
+    await axiosInstance.put('/tags', {
+      id: tag.value.id,
       name: tag.value.name,
-      description: tag.value.description
+      description: tag.value.description,
+      categoryId: tag.value.categoryId
     }).then((response) => {
       loading.value = true
       const apiResponse = response.data
       if(apiResponse.result) {
-        tag.value = apiResponse.data.data
+        dialogEditTag.value = false
         snackbarColor.value = 'success'
         receiveMessage.value = apiResponse.message
         snackbar.value = true
-        dialogEditTag.value = false
         loading.value = false
       } else {
         loading.value = false
@@ -172,11 +204,11 @@
       loading.value = true
       const apiResponse = response.data
       if(apiResponse.result) {
+        dialogEditTag.value = false
         snackbarColor.value = 'success'
         receiveMessage.value = apiResponse.message
         snackbar.value = true
         loading.value = false
-        dialogEditTag.value = false
       } else {
         loading.value = false
         snackbarColor.value = 'error'
@@ -233,7 +265,9 @@
             <v-toolbar-title>標籤列表</v-toolbar-title>
           </v-toolbar>
         </template>
-
+        <template v-slot:item.categoryName="{ item }">
+          {{ formateCategoryName(item.category) }}
+        </template>
         <template v-slot:item.actions="{ item }">
             <v-btn :bordered="false" class="me-2 mb-2 outlined" density="compact" color="edit" @click="handleEditTag(item.id)">編輯</v-btn>
             <v-btn :bordered="false" class="me-2 mb-2 outlined" density="compact" color="delete" @click="deleteCategory(item.id)">刪除</v-btn>
@@ -274,13 +308,26 @@
                 ></v-text-field>
               </v-col>
               <v-col
-                  cols="12">
+                  cols="12"
+                  sm="6"
+                  md="4">
                 描述:
                 <v-text-field
                     v-model="tag.description"
                     label="描述"
-                    required
                 ></v-text-field>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="12">
+                <v-select
+                    v-model="tag.categoryId"
+                    :items="categories"
+                    :item-title="item => item.name"
+                    :item-value="item => item.id"
+                    label="所屬分類"
+                    required
+                ></v-select>
               </v-col>
             </v-row>
           </v-container>
@@ -333,16 +380,27 @@
                     :name="tag.description"
                     v-model="tag.description"
                     label="描述"
-                    required
                 ></v-text-field>
               </v-col>
             </v-row>
+            <row>
+              <v-col cols="12">
+                <v-select
+                    :item-title="item => item.name"
+                    :item-value="item => item.id"
+                    v-model="tag.categoryId"
+                    :items="categories"
+                    label="所屬分類"
+                    required
+                ></v-select>
+              </v-col>
+            </row>
           </v-container>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn
-              color="add"
+              color="edit"
               variant="text"
               @click="editTag()"
           >

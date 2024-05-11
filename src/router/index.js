@@ -22,7 +22,7 @@ import UserGroupPage from "@/pages/UserGroupPage.vue";
 import RolePage from "@/pages/RolePage.vue";
 import NotificationPage from "@/pages/NotificationPage.vue";
 import LoginRecordPage from "@/pages/LoginRecordPage.vue";
-import ArticleDetail from "@/components/ArticleDetail.vue";
+import RecentViewPage from "@/pages/RecentViewPage.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -52,13 +52,6 @@ const router = createRouter({
       path: "/articles",
       name: "Article",
       component: ArticlePage,
-      children: [
-        {
-          path: "/:articleId",
-          name: "ArticleDetail",
-          component: ArticleDetail
-        }
-      ]
     },
     {
       path: "/tags",
@@ -86,6 +79,11 @@ const router = createRouter({
       component: NotificationPage
     },
     {
+      path: "/recentViews",
+      name: "RecentViews",
+      component: RecentViewPage
+    },
+    {
       path: "/loginRecords",
       name: "LoginRecords",
       component: LoginRecordPage
@@ -104,7 +102,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const token = useUserStore().userInfo.token;
+  const token = sessionStorage.getItem('userInfo') ? JSON.parse(sessionStorage.getItem('userInfo')).token : null
   // 驗證jwt token過期時間
   if (token) {
     const now = new Date();

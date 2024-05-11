@@ -9,6 +9,10 @@ const breadcrumbs = ref([
   { text: '郵件通知紀錄', disabled: true, href: '/notifications' },
 ])
 const userStore = useUserStore()
+
+const userInfo = sessionStorage.getItem('userInfo');
+const user = JSON.parse(userInfo);
+
 const loading = ref(false)
 const snackbar = ref(false)
 const snackbarColor = ref('')
@@ -53,11 +57,11 @@ onMounted(async () => {
 })
 async function getNotifications() {
   loading.value = true
-  await axiosInstance.get('/notifications/' + userStore.userInfo.username, {params: {
+  await axiosInstance.get('/notifications/' + user.account, {params: {
       name: search.value.name,
       email: search.value.email,
       subject: search.value.subject,
-      isRead: search.value.isRead,
+      isRead: !!search.value.isRead,
       page: pageable.value.pageNumber,
       pageSize: pageable.value.pageSize
     }}).then((response) => {
@@ -82,7 +86,7 @@ async function getNotifications() {
 
 async function getNotification(id) {
   loading.value = true
-  await axiosInstance.get('/notifications/' + Number(id)).then((response) => {
+  await axiosInstance.get('/notifications/' + user.account + '/' + Number(id)).then((response) => {
     const apiResponse = response.data;
     if(apiResponse.result) {
       notification.value = apiResponse.data
@@ -131,40 +135,40 @@ function resetNotification() {
           prepend-inner-icon="mdi-magnify"
           variant="solo-filled"
           flat
-          hide-details
           single-line
+          hide-details
       ></v-text-field>
       <v-text-field
           class="ml-2"
+          hide-details
           v-model="search.email"
           density="compact"
           label="信箱"
           prepend-inner-icon="mdi-magnify"
           variant="solo-filled"
           flat
-          hide-details
           single-line
       ></v-text-field>
       <v-text-field
           class="ml-2"
-          v-model="search.subject"
-          density="compact"
-          label="標題"
-          prepend-inner-icon="mdi-magnify"
-          variant="solo-filled"
-          flat
-          hide-details
-          single-line
+      hide-details
+      v-model="search.subject"
+      density="compact"
+      label="標題"
+      prepend-inner-icon="mdi-magnify"
+      variant="solo-filled"
+      flat
+      single-line
       ></v-text-field>
       <v-select class="ml-2" v-model="search.isRead" density="compact" label="是否已讀" variant="solo-filled"
-                flat hide-details
+                flat
                 single-line :items="isReads" :item-title="item => item.text" :item-value="item => item.value">
       </v-select>
       <v-divider class="mx-2" inset vertical></v-divider>
       <v-btn :bordered="false" color="search" class="mr-2 outlined" size="large" density="compact" @click="getNotifications">查詢</v-btn>
     </v-card-title>
     <v-data-table multi-sort
-                  :sort-by="[{ key: 'name', order: 'asc'}, { key: 'id', order: 'asc'}]"
+                  :sort-by="[{ key: 'name', order: 'asc'}, { key: 'id', order: 'asc'}, { key: 'isRead', order: 'desc'}]"
                   :headers="headers"
                   :loading="loading"
                   loading-text="載入資料中..."
@@ -197,7 +201,7 @@ function resetNotification() {
   <v-dialog v-model="dialogViewNotification" persistent max-width="600px">
     <v-card class="rounded-xl pa-5">
       <v-card-title>
-        <span class="text-h5">新增分類</span>
+        <span class="text-h5">查看郵件詳情</span>
       </v-card-title>
       <v-card-text>
         <v-container>
@@ -244,6 +248,16 @@ function resetNotification() {
           </v-row>
         </v-container>
       </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn
+            color="cancel"
+            variant="text"
+            @click="dialogViewNotification = false"
+        >
+          取消
+        </v-btn>
+      </v-card-actions>
     </v-card>
   </v-dialog>
 

@@ -46,10 +46,10 @@ export default defineConfig({
     Fonts({
       google: {
         families: [{
-          name: 'Roboto',
+          name: 'Chewy',
           styles: 'wght@100;300;400;500;700;900',
         }, {
-          name: 'Open Sans',
+          name: 'Noto Sans TC',
           styles: 'wght@100;300;400;500;700;900',
         }],
       },

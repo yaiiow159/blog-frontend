@@ -94,7 +94,7 @@ function handleEditRole(id) {
 function resetRole() {
   role.value = {
     id: Number(''),
-    name: '',
+    roleName: '',
     description: ''
   }
 }
@@ -110,7 +110,6 @@ async function addRole() {
       snackbarColor.value = 'success'
       receiveMessage.value = apiResponse.message
       snackbar.value = true
-      role.value = apiResponse.data
       dialogAddRole.value = false
       loading.value = false
     } else {
@@ -128,7 +127,8 @@ async function addRole() {
 }
 
 async function editRole() {
-  await axiosInstance.put('/roles/' + role.value.id, {
+  await axiosInstance.put('/roles', {
+    id: role.value.id,
     roleName: role.value.roleName,
     description: role.value.description
   }).then((response) => {
@@ -138,7 +138,6 @@ async function editRole() {
       snackbarColor.value = 'success'
       receiveMessage.value = apiResponse.message
       snackbar.value = true
-      role.value = apiResponse.data
       dialogEditRole.value = false
       loading.value = false
     } else {
@@ -156,19 +155,19 @@ async function editRole() {
 }
 
 async function deleteRole(id) {
-  await axiosInstance.delete('/roles/' + id).then((response) => {
+  await axiosInstance.delete('/roles/' + Number(id)).then((response) => {
     loading.value = true
     const apiResponse = response.data
-    if(apiResponse.data.result) {
+    if(apiResponse.result) {
       snackbarColor.value = 'success'
-      receiveMessage.value = apiResponse.data.message
+      receiveMessage.value = apiResponse.message
       snackbar.value = true
       loading.value = false
       dialogEditRole.value = false
     } else {
       loading.value = false
       snackbarColor.value = 'error'
-      receiveMessage.value = apiResponse.data.message
+      receiveMessage.value = apiResponse.message
       snackbar.value = true
     }
   }).catch(() => {

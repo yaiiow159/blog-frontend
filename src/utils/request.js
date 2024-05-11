@@ -11,13 +11,13 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     const userStore = useUserStore();
-    const accessToken = userStore.userInfo.token;
+    const token =sessionStorage.getItem('userInfo') ? JSON.parse(sessionStorage.getItem('userInfo')).token : null;
     if(config.url === '/auth/login' || config.url === '/auth/register'
       || config.url === '/auth/forget' || config.url === '/auth/reset') {
       return config;
     }
-    if(accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
+    if(token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -32,12 +32,9 @@ axiosInstance.interceptors.response.use(
     // 通用错误处理函数
     const handleError = (title, text) => {
       Swal.fire({
-        toast: true,
-        showConfirmButton: false,
+        title: title,
+        text: text,
         icon: 'error',
-        iconColor: 'red',
-        title,
-        text,
       });
     };
 

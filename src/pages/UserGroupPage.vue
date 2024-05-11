@@ -109,7 +109,7 @@ function handleEditTag(id) {
 function resetGroup() {
   group.value = {
     id: Number(''),
-    name: '',
+    groupName: '',
     description: '',
     reviewLevel: [],
   }
@@ -124,7 +124,6 @@ async function addGroup() {
     loading.value = true
     const apiResponse = response.data
     if(apiResponse.result) {
-      group.value = apiResponse.data
       dialogAddGroup.value = false
       snackbarColor.value = 'success'
       receiveMessage.value = apiResponse.message
@@ -145,7 +144,8 @@ async function addGroup() {
 }
 
 async function editGroup() {
-  await axiosInstance.put('/groups/' + Number(group.value.id), {
+  await axiosInstance.put('/groups', {
+    id: group.value.id,
     groupName: group.value.groupName,
     description: group.value.description,
     reviewLevel: group.value.reviewLevel
@@ -153,7 +153,6 @@ async function editGroup() {
     loading.value = true
     const apiResponse = response.data
     if(apiResponse.result) {
-      group.value = apiResponse.data
       snackbarColor.value = 'success'
       receiveMessage.value = apiResponse.message
       snackbar.value = true
@@ -219,12 +218,13 @@ async function deleteGroup(id) {
             prepend-inner-icon="mdi-magnify"
             variant="solo-filled"
             flat
-            hide-details
             single-line
+            hide-details
         ></v-text-field>
         <v-select v-model="search.reviewLevel" :items="reviewLevels"
                   :item-title="reviewLevels.text"
                   :item-value="reviewLevels.value"
+                  hide-details
                   label="審查等級"
                   variant="solo-filled"
                   density="compact" class="ml-2">
@@ -297,7 +297,7 @@ async function deleteGroup(id) {
                 群組權限:
                 <v-select
                     v-model="group.reviewLevel"
-                    :items="reviewLevel"
+                    :items="reviewLevels"
                     :item-title="item => item.text"
                     :item-value="item => item.value"
                     label="權限"
@@ -313,7 +313,7 @@ async function deleteGroup(id) {
           <v-btn
               color="add"
               variant="text"
-              @click="addGroup()"
+              @click="addGroup"
           >
             新增
           </v-btn>
@@ -363,7 +363,7 @@ async function deleteGroup(id) {
                 群組權限:
                 <v-select
                     v-model="group.reviewLevel"
-                    :items="reviewLevel"
+                    :items="reviewLevels"
                     :item-title="item => item.text"
                     :item-value="item => item.value"
                     label="權限"
@@ -379,7 +379,7 @@ async function deleteGroup(id) {
           <v-btn
               color="add"
               variant="text"
-              @click="editGroup()"
+              @click="editGroup"
           >
             編輯
           </v-btn>

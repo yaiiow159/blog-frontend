@@ -226,7 +226,9 @@
           snackbar.value = true
           receiveMessage.value = apiResponse.message
           const userInfo = apiResponse.data
-          userStore.login(userInfo)
+          sessionStorage.setItem('userInfo', JSON.stringify(userInfo))
+          const user = JSON.parse(sessionStorage.getItem('userInfo'));
+          userStore.login(user)
           router.push({ name: 'Home' })
         } else {
           loading.value = false
@@ -263,15 +265,17 @@
 </script>
 
 <style scoped lang="sass">
-    .login-container
-        display: flex
-        justify-content: center
-        align-items: center
-        height: 100vh
-        background-image: url("../assets/login_bg.jpg")
-        background-size: cover
-        background-position: center
-        background-repeat: no-repeat
-    .pointer
-      cursor: pointer
+  .login-container
+    display: flex
+    justify-content: center
+    align-items: center
+    height: 100vh
+    background-image: url("../assets/login_bg.jpg")
+    background-size: cover
+    background-position: center
+    background-repeat: no-repeat
+
+  .pointer
+    cursor: pointer
+
 </style>

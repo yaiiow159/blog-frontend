@@ -12,6 +12,8 @@ declare module 'vue' {
     AppSidebar: typeof import('./components/AppSidebar.vue')['default']
     ArticleDetail: typeof import('./components/ArticleDetail.vue')['default']
     CommentBanner: typeof import('./components/CommentBanner.vue')['default']
+    CommentBar: typeof import('./components/CommentBar.vue')['default']
+    PersonalResume: typeof import('./components/PersonalResume.vue')['default']
     README: typeof import('./components/README.md')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

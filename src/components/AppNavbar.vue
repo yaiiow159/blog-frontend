@@ -1,5 +1,5 @@
 <script setup>
-  import { ref, reactive } from 'vue'
+  import { ref, computed } from 'vue'
   import axiosInstance from "@/utils/request";
   import {rules} from "@/utils/rules";
   import {useUserStore} from "@/stores/user";
@@ -17,8 +17,10 @@
   const usernameRuleRef = [usernameRule]
   const passwordRuleRef = [passwordRule]
   const emailRuleRef = [emailRule]
+  const userInfo = sessionStorage.getItem('userInfo');
+  const user = JSON.parse(userInfo);
 
-  const imageUrl = ref('');
+  const imageUrl = ref(null)
   const imageName = ref('');
   const imageFile = ref(null);
   const dialogUserProfile = ref(false);
@@ -34,6 +36,7 @@
     avatar: null,
     password: '',
     nickname: '',
+    avatarPath: '',
   })
   const userRecord = ref({
     commentCount: 0,
@@ -83,11 +86,11 @@
     })
   }
 
-  function openUserProfile() {
-      getUserArticleRecord()
-      getUserCommentRecord()
-      resetProfile()
-      handleUserProfile();
+  async function openUserProfile() {
+      await getUserArticleRecord()
+      await getUserCommentRecord()
+      await resetProfile()
+      await handleUserProfile();
       dialogUserProfile.value = true
   }
 
@@ -129,17 +132,10 @@
 
 
   function handlePassword() {
-    let result = rules.confirmPasswordRule(passwordForm.value.newPassword, passwordForm.value.oldPassword)
-    if(result === true) {
       handleChangePassword(passwordForm.value)
-    } else {
-      receiveMessage.value = result
-      snackbarColor.value = 'error'
-      snackbar.value = true
-    }
   }
   // 判斷是否登入才開始count通知數
-  if(userStore.getUserInfo.token !== null) {
+  if(user.token) {
     setInterval(function () {notificationCounting()}, 50000)
   }
 
@@ -159,8 +155,6 @@
       fr.addEventListener('load', () => {
         imageUrl.value = fr.result
         imageFile.value = files[0]
-        console.log("圖片url:" + imageUrl.value)
-        console.log("圖片File:" + imageFile.value)
       })
     } else {
       imageName.value = ''
@@ -169,20 +163,39 @@
     }
   }
 
-    async function notificationCounting() {
-     await axiosInstance.get('/notifications/count').then((response) => {
-       const apiResponse = response.data
-       if(apiResponse.result) {
-         notificationCount.value = apiResponse.data
-       } else {
-         notificationCount.value = 0
-         receiveMessage.value = apiResponse.message
-         snackbarColor.value = 'error'
-         snackbar.value = true
-       }
-     }).catch(() => {
+  async function notificationCounting() {
+   await axiosInstance.get('/notifications/count').then((response) => {
+     const apiResponse = response.data
+     if(apiResponse.result) {
+       notificationCount.value = apiResponse.data
+     } else {
+       notificationCount.value = 0
+       receiveMessage.value = apiResponse.message
+       snackbarColor.value = 'error'
+       snackbar.value = true
+     }
+   }).catch(() => {
 
-     })
+   })
+  }
+
+  async function uploadAvatar() {
+    await axiosInstance.post('/users/upload', {
+      file: imageFile.value
+    }).then((response) => {
+        const apiResponse = response.data
+        if(apiResponse.result) {
+          receiveMessage.value = apiResponse.message
+          snackbarColor.value = 'success'
+          snackbar.value = true
+        } else {
+          receiveMessage.value = apiResponse.message
+          snackbarColor.value = 'error'
+          snackbar.value = true
+        }
+    }).catch(() => {
+      loading.value = false
+    })
   }
 
   async function handleChangePassword(password) {
@@ -238,7 +251,6 @@
 
   async function updateProfile() {
     const formData = new FormData();
-    formData.append('avatar', imageUrl.value);
     formData.append('username', userProfile.value.username);
     formData.append('password', userProfile.value.password);
     formData.append('nickname', userProfile.value.nickname);
@@ -246,35 +258,33 @@
     formData.append('email', userProfile.value.email);
     formData.append('address', userProfile.value.address);
 
-    axiosInstance.put(`/users/userProfile`, formData).then((response) => {
-      const apiResponse = response.data
-      if(apiResponse.result) {
-        receiveMessage.value = apiResponse.message
-        snackbarColor.value = 'success'
-        snackbar.value = true
-        dialogUserProfile.value = false
-      } else {
-        receiveMessage.value = apiResponse.message
-        snackbarColor.value = 'error'
-        snackbar.value = true
-      }
-    }).catch(() => {
-       loading.value = false
+    await uploadAvatar().then(() => {
+      axiosInstance.put('/users/updateProfile', formData).then((response) => {
+        const apiResponse = response.data
+        if(apiResponse.result) {
+          receiveMessage.value = apiResponse.message
+          snackbarColor.value = 'success'
+          snackbar.value = true
+        } else {
+          receiveMessage.value = apiResponse.message
+          snackbarColor.value = 'error'
+          snackbar.value = true
+        }
+      }).catch(() => {
+        loading.value = false
+      })
     })
   }
 
   async function handleUserProfile() {
     loading.value = true;
     const username = userStore.userInfo.username
-    axiosInstance.get('/userProfile/', {params: {username: username}})
+    axiosInstance.get('/users/userProfile/' + username)
       .then((response) => {
         const apiResponse = response.data
         if(apiResponse.result) {
           loading.value = false;
           userProfile.value = apiResponse.data;
-          const byteArray = new Uint8Array(apiResponse.data.avatar);
-          const blob = new Blob([byteArray], { type: 'image/png' });
-          imageUrl.value = URL.createObjectURL(blob);
         } else {
           loading.value = false;
           receiveMessage.value = apiResponse.message;
@@ -361,7 +371,7 @@
   >
     <v-list density="compact" nav>
       <v-list-item prepend-icon="mdi-account"
-                   :prepend-avatar="userProfile.avatar"
+                   :prepend-avatar="userProfile.avatarPath"
                    :title="userProfile.username">
         <v-btn-group :theme="$vuetify.display.mobile ? 'dark' : undefined">
           <v-btn @click="openPassword" color="primary" variant="text">修改密碼</v-btn>
@@ -381,24 +391,26 @@
     <v-list density="compact" nav>
       <v-list-item prepend-icon="mdi-file-document-multiple" title="文章管理" value="article" to="/articles">
       </v-list-item>
-      <v-list-item prepend-icon="mdi-folder" title="分類管理" value="category" to="/categories">
+      <v-list-item v-show="user.roles.includes('ROLE_ADMIN')" prepend-icon="mdi-folder" title="分類管理" value="category" to="/categories">
       </v-list-item>
-      <v-list-item prepend-icon="mdi-tag" title="標籤管理" value="category" to="/tags">
+      <v-list-item v-show="user.roles.includes('ROLE_ADMIN')" prepend-icon="mdi-tag" title="標籤管理" value="category" to="/tags">
       </v-list-item>
 
-      <v-divider :thickness='1' class="my-2"></v-divider>
+      <v-divider v-show="user.roles.includes('ROLE_ADMIN')"  :thickness='1' class="my-2"></v-divider>
 
-      <v-list-item prepend-icon="mdi-account" title="用戶管理" value="user" to="/users">
+      <v-list-item v-show="user.roles.includes('ROLE_ADMIN')" prepend-icon="mdi-account" title="用戶管理" value="user" to="/users">
       </v-list-item>
-      <v-list-item prepend-icon="mdi-account-group" title="群組管理" value="user" to="/groups">
+      <v-list-item v-show="user.roles.includes('ROLE_ADMIN')" prepend-icon="mdi-account-group" title="群組管理" value="user" to="/groups">
       </v-list-item>
-      <v-list-item prepend-icon="mdi-account-supervisor-circle" title="角色管理" value="user" to="/roles">
+      <v-list-item v-show="user.roles.includes('ROLE_ADMIN')" prepend-icon="mdi-account-supervisor-circle" title="角色管理" value="user" to="/roles">
       </v-list-item>
 
       <v-divider :thickness='1' class="my-2"></v-divider>
 
       <v-list-item prepend-icon="mdi-login" title="使用者登入紀錄" value="loginRecord" to="/loginRecords"></v-list-item>
+      <v-list-item prepend-icon="mdi-eye" title="瀏覽文章記錄" value="reviewRecord" to="/recentViews"></v-list-item>
     </v-list>
+
   </v-navigation-drawer>
 
   <v-dialog v-model="dialogPassword" persistent max-width="300px">
@@ -464,14 +476,14 @@
           <v-container>
             <v-row>
                 <v-col cols="12" class="text-center">
-                  <v-avatar size="120" class="ma-2" :image="imageUrl">
-                    <span class="text-h5" v-if="!imageUrl">{{ userStore.userInfo.username }}</span>
+                  <v-avatar size="120" class="ma-2" :image="userProfile.avatarPath">
+                    <span class="text-h5" v-if="!userProfile.avatarPath">{{ userStore.userInfo.username }}</span>
                   </v-avatar>
                   <v-file-input
-                    type="file"
                     label="選擇圖片"
                     prepend-icon="mdi-camera"
                     @change="handleFileUpload"
+                    show-size
                     accept="image/png"
                     variant="solo-filled"
                   ></v-file-input>
@@ -480,32 +492,31 @@
                   <v-text-field :rules="usernameRuleRef" v-model="userProfile.username"  label="姓名" outlined dense></v-text-field>
                   <v-text-field :rules="passwordRuleRef" v-model="userProfile.password"  label="密碼" type="password" outlined dense></v-text-field>
                   <v-text-field v-model="userProfile.nickname"  label="暱稱" outlined dense></v-text-field>
-                  <v-date-picker v-model="userProfile.birthday"  landscape></v-date-picker>
                   <v-text-field :rules="emailRuleRef" v-model="userProfile.email" label="電子郵件" outlined dense></v-text-field>
                   <v-text-field v-model="userProfile.address" label="地址" :model-value="userProfile.address" outlined dense></v-text-field>
                 </v-col>
             </v-row>
             <v-row class="my-2">
               <v-col cols="6" md="3">
-                <v-card class="pa-2 text-center">
+                <v-card height="100" max-height="100" class="pa-2 text-center">
                   <div class="subtitle-2">評論總數</div>
                   <div class="text-h6">{{ userRecord.commentCount ? userRecord.commentCount : 0 }}</div>
                 </v-card>
               </v-col>
               <v-col cols="6" md="3">
-                <v-card class="pa-2 text-center">
+                <v-card height="100" max-height="100" class="pa-2 text-center">
                   <div class="subtitle-2">評論按讚總數</div>
                   <div class="text-h6">{{ userRecord.commentLikeCount ? userRecord.commentLikeCount : 0 }}</div>
                 </v-card>
               </v-col>
               <v-col cols="6" md="3">
-                <v-card class="pa-2 text-center">
+                <v-card height="100" max-height="100" class="pa-2 text-center">
                   <div class="subtitle-2">文章總數</div>
                   <div class="text-h6">{{ userRecord.articleCount ? userRecord.articleCount : 0 }}</div>
                 </v-card>
               </v-col>
               <v-col cols="6" md="3">
-                <v-card class="pa-2 text-center">
+                <v-card height="100" max-height="100" class="pa-2 text-center">
                   <div class="subtitle-2">文章按讚總數</div>
                   <div class="text-h6">{{ userRecord.articleLikeCount ? userRecord.articleLikeCount : 0 }}</div>
                 </v-card>

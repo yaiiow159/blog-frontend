@@ -108,6 +108,9 @@
             const apiResponse = response.data
             if(apiResponse.result) {
                dialogAddCategory.value = false
+               snackbarColor.value = 'success'
+               receiveMessage.value = apiResponse.message
+               snackbar.value = true
             } else {
                snackbarColor.value = 'error'
                receiveMessage.value = apiResponse.message
@@ -122,7 +125,8 @@
     }
 
     async function editCategory() {
-       await axiosInstance.put('/categories/' + Number(category.value.id), {
+       await axiosInstance.put('/categories', {
+           id: category.value.id,
            name: category.value.name,
            description: category.value.description
        }).then((response) => {
@@ -130,6 +134,9 @@
            const apiResponse = response.data
            if(apiResponse.result) {
               dialogEditCategory.value = false
+              snackbarColor.value = 'success'
+              receiveMessage.value = apiResponse.message
+              snackbar.value = true
            } else {
               snackbarColor.value = 'error'
               receiveMessage.value = apiResponse.message
@@ -341,7 +348,4 @@
   transition: background-color 0.3s ease
 .v-btn:hover
   background-color: var(--v-primary-base)
-.centered-cell
-  text-align: center
-  vertical-align: middle
 </style>

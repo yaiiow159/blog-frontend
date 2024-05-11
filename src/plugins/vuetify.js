@@ -47,6 +47,7 @@ export default createVuetify({
           search: '#757575',
           card: '#212121',
           breadcrumb: colors.teal.lighten3,
+          switch: colors.teal.lighten3,
         },
       },
     },

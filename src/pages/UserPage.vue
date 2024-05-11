@@ -1,6 +1,6 @@
 <script setup>
 import axiosInstance from "@/utils/request";
-import { ref, onMounted } from 'vue';
+import { ref, onMounted,watch } from 'vue';
 
 const breadcrumbs = ref([
   { text: '首頁', disabled: false, href: '/home' },
@@ -35,12 +35,16 @@ const user = ref({
       userName: '',
       password: '',
       email: '',
+      phone: '',
       nickName: '',
-      birthday: Date.now(),
+      birthday: null,
       address: '',
       roleIds: Number([]),
       status: '',
-      groupId: Number('')
+      groupId: Number(''),
+      userGroupDto: {
+
+      }
     }
 )
 const search = ref({
@@ -58,6 +62,11 @@ onMounted(async () => {
   await getRoles()
   await getGroups()
 })
+
+function formatDate(date) {
+  // 轉換成 YYYY-MM-DD:HH:mm:ss 格式
+  return new Date(date).toISOString().split('T')[0]
+}
 
 function formatePassword(password) {
   return '*'.repeat(password.length)
@@ -102,21 +111,7 @@ async function getUser(id) {
       loading.value = false
       // 如果roles包含 roleIds的id 則勾選
       user.value.roleIds = user.value.roles.map(role => role.id)
-      user.value.groupId = user.value.group.id
-      if(roles.value.length > 0) {
-        roles.value.forEach(role => {
-          if(user.value.roleIds.includes(role.id)) {
-            role.checked = true
-          }
-        })
-      }
-      if(groups.value.length > 0) {
-        groups.value.forEach(group => {
-          if(user.value.groupId == group.id) {
-            group.checked = true
-          }
-        })
-      }
+      user.value.groupId = user.value.userGroupDto.id
     } else {
       loading.value = false
       snackbarColor.value = 'error'
@@ -182,7 +177,8 @@ function resetUser() {
     password: '',
     email: '',
     nickName: '',
-    birthday: Date.now(),
+    phone: '',
+    birthday: null,
     address: '',
     roleIds: [],
     groupId: Number('')
@@ -190,14 +186,24 @@ function resetUser() {
 }
 async function addUser() {
   await axiosInstance.post('/users', {
-    user
+    groupId: user.value.groupId,
+    userName: user.value.userName,
+    password: user.value.password,
+    email: user.value.email,
+    nickName: user.value.nickName,
+    birthday: user.value.birthday,
+    address: user.value.address,
+    roleIds: user.value.roleIds,
+    phone: user.value.phone
   }).then((response) => {
     loading.value = true
     const apiResponse = response.data
     if(apiResponse.result) {
-      user.value = apiResponse.data
-      dialogAddUser.value = false
       loading.value = false
+      snackbarColor.value = 'success'
+      receiveMessage.value = apiResponse.message
+      snackbar.value = true
+      dialogAddUser.value = false
     } else {
       loading.value = false
       snackbarColor.value = 'error'
@@ -213,13 +219,26 @@ async function addUser() {
 }
 
 async function editUser() {
-  await axiosInstance.put('/users/' + Number(user.value.id), {user}).then((response) => {
+  await axiosInstance.put('/users', {
+    id: user.value.id,
+    groupId: user.value.groupId,
+    userName: user.value.userName,
+    password: user.value.password,
+    email: user.value.email,
+    nickName: user.value.nickName,
+    birthday: user.value.birthday,
+    address: user.value.address,
+    roleIds: user.value.roleIds,
+    phone: user.value.phone
+  }).then((response) => {
     loading.value = true
     const apiResponse = response.data
     if(apiResponse.result) {
-      user.value = apiResponse.data
-      dialogEditUser.value = false
       loading.value = false
+      snackbarColor.value = 'success'
+      receiveMessage.value = apiResponse.message
+      snackbar.value = true
+      dialogEditUser.value = false
     } else {
       loading.value = false
       snackbarColor.value = 'error'
@@ -355,8 +374,8 @@ async function deleteCategory(id) {
                 <v-select
                     v-model="user.groupId"
                     :items="groups"
-                    item-text="groupName"
-                    item-value="id"
+                    :item-title="item => item.groupName"
+                    :item-value="item => item.id"
                     label="選擇群組"
                     required
                 ></v-select>
@@ -366,16 +385,14 @@ async function deleteCategory(id) {
                 <v-select
                     v-model="user.roleIds"
                     :items="roles"
-                    item-text="roleName"
-                    item-value="id"
+                    :item-title="item => item.roleName"
+                    :item-value="item => item.id"
                     label="選擇角色"
                     multiple
                 ></v-select>
               </v-col>
               <v-col
                   cols="12"
-                  sm="6"
-                  md="4"
               >
                 名稱:
                 <v-text-field
@@ -411,7 +428,7 @@ async function deleteCategory(id) {
                 ></v-text-field>
               </v-col>
               <v-col
-                  cols="6">
+                  cols="12">
                 地址:
                 <v-text-field
                     v-model="user.address"
@@ -420,8 +437,11 @@ async function deleteCategory(id) {
               </v-col>
               <v-col
                   cols="12">
-                出生年月日:
-                <v-date-picker v-model="user.birthday" landscape></v-date-picker>
+                連絡電話:
+                <v-text-field
+                    v-model="user.phone"
+                    label="連絡電話"
+                ></v-text-field>
               </v-col>
             </v-row>
           </v-container>
@@ -431,7 +451,7 @@ async function deleteCategory(id) {
           <v-btn
               color="add"
               variant="text"
-              @click="addUser()"
+              @click="addUser"
           >
             新增
           </v-btn>
@@ -459,8 +479,8 @@ async function deleteCategory(id) {
                 <v-select
                     v-model="user.groupId"
                     :items="groups"
-                    item-text="groupName"
-                    item-value="id"
+                    :item-title="item => item.groupName"
+                    :item-value="item => item.id"
                     label="選擇群組"
                     required
                 ></v-select>
@@ -470,45 +490,62 @@ async function deleteCategory(id) {
                 <v-select
                     v-model="user.roleIds"
                     :items="roles"
-                    item-text="roleName"
-                    item-value="id"
+                    :item-title="item => item.roleName"
+                    :item-value="item => item.id"
                     label="選擇角色"
                     multiple
                 ></v-select>
               </v-col>
               <v-col
                   cols="12"
-                  sm="6"
-                  md="4"
               >
                 名稱:
                 <v-text-field
-                    v-model="user.id"
-                    label="id"
-                    required
-                    hidden="hidden"
-                ></v-text-field>
-              </v-col>
-              <v-col
-                  cols="12"
-                  sm="6"
-                  md="4"
-              >
-                描述:
-                <v-text-field
-                    :name="user.name"
-                    v-model="user.name"
+                    v-model="user.userName"
                     label="名稱"
                     required
                 ></v-text-field>
               </v-col>
+              <v-col cols="12">
+                <v-text-field
+                    v-model="user.nickName"
+                    label="暱稱"
+                ></v-text-field>
+              </v-col>
               <v-col
                   cols="12">
+                密碼:
                 <v-text-field
-                    :name="user.description"
-                    v-model="user.description"
-                    label="描述"
+                    v-model="user.password"
+                    label="密碼"
                     required
+                    datatype="password"
+                ></v-text-field>
+              </v-col>
+              <v-col
+                  cols="12">
+                電子郵件:
+                <v-text-field
+                    v-model="user.email"
+                    label="電子郵件"
+                    required
+                    datatype="email"
+                ></v-text-field>
+              </v-col>
+              <v-col
+                  cols="12">
+                地址:
+                <v-text-field
+                    v-model="user.address"
+                    label="地址"
+                ></v-text-field>
+              </v-col>
+              <v-col
+                  cols="12">
+                連絡電話:
+                <v-text-field
+                    v-model="user.phone"
+                    label="連絡電話"
                 ></v-text-field>
               </v-col>
             </v-row>

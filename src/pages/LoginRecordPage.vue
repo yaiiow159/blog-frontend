@@ -8,6 +8,10 @@ const breadcrumbs = ref([
   { text: '使用者登入紀錄', disabled: true, href: '/loginRecords' },
 ])
 const userStore = useUserStore()
+
+const userInfo = sessionStorage.getItem('userInfo');
+const user = JSON.parse(userInfo);
+
 const loading = ref(false)
 const snackbar = ref(false)
 const snackbarColor = ref('')
@@ -18,7 +22,9 @@ const search = ref({
   action: '',
 })
 const actions = [
-
+  { text: '全部', value: null },
+  { text: '登入', value: 'login' },
+  { text: '登出', value: 'logout' },
 ]
 const pageable = ref({
   totalElements: Number(0),
@@ -51,7 +57,7 @@ onMounted(async () => {
 })
 async function getLoginRecords() {
   loading.value = true
-  await axiosInstance.get('/loginRecords/' + userStore.userInfo.username, {params: {
+  await axiosInstance.get('/loginRecords/' + user.account, {params: {
       username: search.value.username,
       ipAddress: search.value.ipAddress,
       action: search.value.action,
@@ -135,7 +141,6 @@ function resetLoginRecord() {
           prepend-inner-icon="mdi-magnify"
           variant="solo-filled"
           flat
-          hide-details
           single-line
       ></v-text-field>
       <v-text-field
@@ -146,20 +151,13 @@ function resetLoginRecord() {
           prepend-inner-icon="mdi-magnify"
           variant="solo-filled"
           flat
-          hide-details
           single-line
       ></v-text-field>
-        <v-select class="ml-2" v-model="search.action" density="compact" label="執行動作" variant="solo-filled" flat hide-details>
+        <v-select class="ml-2" v-model="search.action" density="compact" label="執行動作" variant="solo-filled" flat
+          :item-title="item => item.text" :item-value="item => item.value" :items="actions">
           <template v-slot:label>
             執行動作
           </template>
-          <v-list>
-            <v-list-item
-                v-for="item in actions"
-                :title="item"
-                :value="item"
-            ></v-list-item>
-          </v-list>
         </v-select>
       <v-divider class="mx-2" inset vertical></v-divider>
       <v-btn :bordered="false" color="search" class="mr-2 outlined" size="large" density="compact" @click="getLoginRecords">查詢</v-btn>
@@ -198,6 +196,10 @@ function resetLoginRecord() {
       </template>
     </v-data-table>
   </v-card>
+
+  <v-alert border="top" colored-border type="error" elevation="2">
+      資料只會保存一天前的登入紀錄,後端系統會自行進行定時清理
+  </v-alert>
 
   <v-dialog v-model="dialogViewNotification" persistent max-width="600px">
     <v-card class="rounded-xl pa-5">

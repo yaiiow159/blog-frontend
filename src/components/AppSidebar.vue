@@ -18,7 +18,6 @@
   const passwordForm = ref({
     oldPassword: '',
     newPassword: '',
-    confirmPassword: ''
   })
   const userProfile = ref({
     username: '',
@@ -30,16 +29,14 @@
   })
   const drawer = ref(false)
 
-  function handlePassword() {
-    let result = rules.confirmPasswordRule(passwordForm.value.newPassword, passwordForm.value.confirmPassword)
-    if(result === true) {
-      handleChangePassword(passwordForm.value)
-    } else {
-      receiveMessage.value = result
-      snackbarColor.value = 'error'
-      snackbar.value = true
+  function openDialogPassword() {
+    passwordForm.value = {
+      oldPassword: '',
+      newPassword: '',
     }
+    dialogPassword.value = true
   }
+
 
   async function handleChangePassword(password) {
     loading.value = true;
@@ -133,6 +130,7 @@
       </v-list-item>
       <v-list-item prepend-icon="mdi-account-supervisor-circle" title="角色管理" value="user" to="/role">
       </v-list-item>
+
     </v-list>
   </v-navigation-drawer>
 
@@ -154,7 +152,7 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="edit" text="送出" @click="handlePassword">送出</v-btn>
+          <v-btn color="edit" text="送出" @click="handleChangePassword">送出</v-btn>
           <v-btn color="cancel" text="取消" @click="dialogPassword = false">取消</v-btn>
         </v-card-actions>
       </v-form>
