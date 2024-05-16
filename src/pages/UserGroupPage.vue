@@ -36,7 +36,7 @@ const headers = [
   { title: '描述', key: 'description', sortable: false },
   { title: '覆核等級', key: 'reviewLevel',sortable: true },
   { title: '發布時間', key: 'createDate',sortable: true },
-  { title: '更新時間', key: 'updateDate',sortable: true },
+  { title: '更新時間', key: 'updDate',sortable: true },
   { title: '操作', key: 'actions',sortable: false },
 ]
 const group = ref({

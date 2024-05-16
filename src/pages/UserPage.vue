@@ -25,7 +25,7 @@ const headers = [
   { title: '群組', key: 'groupName', sortable: false },
   { title: '狀態', key: 'status', sortable: true },
   { title: '發布時間', key: 'createDate', sortable: true },
-  { title: '更新時間', key: 'updateDate',sortable: true },
+  { title: '更新時間', key: 'updDate',sortable: true },
   { title: '操作', key: 'actions',sortable: false },
 ]
 const groups = ref([])

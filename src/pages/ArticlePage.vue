@@ -35,10 +35,12 @@
   const imageFile = ref(null)
 
   const liked = ref(false)
+  const disliked = ref(false)
   const bookmarked = ref(false)
   const viewsCount = ref(0)
   const bookmarksCount = ref(0)
   const likesCount = ref(0)
+  const dislikesCount = ref(0)
 
   const comments = ref([])
   const comment = ref({
@@ -99,7 +101,7 @@
     { title: '描述', key: 'description', sortable: false },
     { title: '狀態', key: 'status', sortable: true },
     { title: '發布時間', key: 'createDate',sortable: true },
-    { title: '更新時間', key: 'updateDate',sortable: true },
+    { title: '更新時間', key: 'updDate',sortable: true },
     { title: '操作', key: 'actions',sortable: false },
   ]
   onMounted(async () => {
@@ -407,16 +409,14 @@
     }).then((response) => {
       const apiResponse = response.data
       if (apiResponse.result) {
-        snackbarColor.value = 'success'
-        receiveMessage.value = apiResponse.message
-        snackbar.value = true
+          console.log(apiResponse.data)
       } else {
         snackbarColor.value = 'error'
         receiveMessage.value = apiResponse.message
         snackbar.value = true
       }
     }).finally(() => {
-      getViewsCount()
+      getViewsCount(id)
     })
   }
 
@@ -432,7 +432,7 @@
         snackbar.value = true
       }
     }).finally(() => {
-      getViewsCount()
+      getViewsCount(id)
     })
   }
 
@@ -470,6 +470,7 @@
     await axiosInstance.post('/posts/' + Number(article.value.id) + '/comments', {
       name: user.account,
       content: comment.value.content,
+      postId: Number(article.value.id)
     }).then((response) => {
       const apiResponse = response.data
       if (apiResponse.result) {
@@ -495,6 +496,7 @@
     await axiosInstance.put('/posts/' + Number(article.value.id) + '/comments/' + Number(comment.value.id), {
       name: comment.value.name,
       content: comment.value.content,
+      postId: Number(article.value.id)
     }).then((response) => {
       const apiResponse = response.data
       if (apiResponse.result) {
@@ -513,19 +515,23 @@
     })
   }
 
-  async function handleDeleteComment() {
+  async function handleDeleteComment(id) {
     loading.value = true
-    await axiosInstance.delete('/posts/' + Number(article.value.id) + '/comments/' + Number(comment.value.id)).then((response) => {
+    await axiosInstance.delete('/posts/' + Number(article.value.id) + '/comments/' + Number(id)).then((response) => {
       const apiResponse = response.data
       if (apiResponse.result) {
         loading.value = false
-        getComments(article.value.id)
+        snackbarColor.value = 'success'
+        receiveMessage.value = apiResponse.message
+        snackbar.value = true
       } else {
         loading.value = false
         snackbarColor.value = 'error'
         receiveMessage.value = apiResponse.message
         snackbar.value = true
       }
+    }).catch().finally(() => {
+      getComments()
     })
   }
 
@@ -592,10 +598,7 @@
       await axiosInstance.delete('/posts/' + Number(article.value.id) + '/bookmarks').then((response) => {
         const apiResponse = response.data
         if (apiResponse.result) {
-          loading.value = false
-          snackbarColor.value = 'success'
-          receiveMessage.value = apiResponse.message
-          snackbar.value = true
+          cancelSubscription()
         } else {
           loading.value = false
           snackbarColor.value = 'error'
@@ -614,11 +617,8 @@
       await axiosInstance.post('/posts/' + Number(article.value.id) + '/bookmarks').then((response) => {
         const apiResponse = response.data
         if (apiResponse.result) {
-          loading.value = false
-          snackbarColor.value = 'success'
-          receiveMessage.value = apiResponse.message
-          snackbar.value = true
           bookmarked.value = true
+          setSubscription()
         } else {
           loading.value = false
           snackbarColor.value = 'error'
@@ -632,6 +632,56 @@
       })
     }
   }
+
+  async function setSubscription() {
+    loading.value = true
+    await axiosInstance.post('/subscript/notification', {
+      postId: article.value.id,
+      username: user.account,
+      authorName: article.value.authorName,
+      email: article.value.authorEmail
+    }).then((response) => {
+      const apiResponse = response.data
+      if (apiResponse.result) {
+        loading.value = false
+        receiveMessage.value = apiResponse.message
+        snackbarColor.value = 'success'
+        snackbar.value = true
+      } else {
+        snackbarColor.value = 'error'
+        receiveMessage.value = apiResponse.message
+        snackbar.value = true
+      }
+    }).catch(() => {
+      loading.value = false
+    }).finally(() => {
+      loading.value = false
+    })
+  }
+
+  async function cancelSubscription() {
+    loading.value = true
+    await axiosInstance.delete('/subscript/notification', {
+      postId: article.value.id,
+      username: user.account,
+      authorName: article.value.authorName,
+      email: article.value.authorEmail
+    }).then((response) => {
+      const apiResponse = response.data
+      if (apiResponse.result) {
+        bookmarksCount.value = apiResponse.data
+      } else {
+        snackbarColor.value = 'error'
+        receiveMessage.value = apiResponse.message
+        snackbar.value = true
+      }})
+    .catch(() => {
+      loading.value = false
+    }).finally(() => {
+      loading.value = false
+    })
+  }
+
   async function getLikesCount() {
     await axiosInstance.get('/posts/' + Number(article.value.id) + '/likesCount').then((response) => {
       const apiResponse = response.data
@@ -646,51 +696,65 @@
       loading.value = false
     })
   }
-  async function toggleLike() {
-    loading.value = true
-    if (liked.value === true) {
-      await axiosInstance.delete('/posts/' + Number(article.value.id) + '/like').then((response) => {
-        const apiResponse = response.data
-        if (apiResponse.result) {
-          loading.value = false
-          snackbarColor.value = 'success'
-          receiveMessage.value = apiResponse.message
-          snackbar.value = true
-          liked.value = false
-        } else {
-          loading.value = false
-          snackbarColor.value = 'error'
-          receiveMessage.value = apiResponse.message
-          snackbar.value = true
-        }
-      }).catch(() => {
-        loading.value = false
-      }).finally(() => {
-        getLikesCount()
-      })
-    }
 
-    if (liked.value === false) {
-      await axiosInstance.post('/posts/' + Number(article.value.id) + '/like').then((response) => {
-        const apiResponse = response.data
-        if (apiResponse.result) {
-          loading.value = false
-          snackbarColor.value = 'success'
-          receiveMessage.value = apiResponse.message
-          snackbar.value = true
-          liked.value = true
-        } else {
-          loading.value = false
-          snackbarColor.value = 'error'
-          receiveMessage.value = apiResponse.message
-          snackbar.value = true
-        }
-      }).catch(() => {
+  async function getDislikeCount() {
+    await axiosInstance.get('/posts/' + Number(article.value.id) + '/dislikesCount').then((response) => {
+      const apiResponse = response.data
+      if(apiResponse.result){
+        dislikesCount.value = apiResponse.data
+      } else {
+        snackbarColor.value = 'error'
+        receiveMessage.value = apiResponse.message
+        snackbar.value = true
+      }
+    }).catch(() => {
+    })
+  }
+
+  async function like() {
+    loading.value = true
+    await axiosInstance.post('/posts/' + Number(article.value.id) + '/like').then((response) => {
+      const apiResponse = response.data
+      if (apiResponse.result) {
         loading.value = false
-      }).finally(() => {
-          getLikesCount()
-      })
-    }
+        snackbarColor.value = 'success'
+        receiveMessage.value = apiResponse.message
+        snackbar.value = true
+        liked.value = true
+      } else {
+        loading.value = false
+        snackbarColor.value = 'error'
+        receiveMessage.value = apiResponse.message
+        snackbar.value = true
+      }
+    }).catch(() => {
+      loading.value = false
+    }).finally(() => {
+        getLikesCount()
+    })
+  }
+
+  async function dislike() {
+    loading.value = true
+    await axiosInstance.delete('/posts/' + Number(article.value.id) + '/like').then((response) => {
+      const apiResponse = response.data
+      if (apiResponse.result) {
+        loading.value = false
+        snackbarColor.value = 'success'
+        receiveMessage.value = apiResponse.message
+        snackbar.value = true
+        liked.value = false
+      } else {
+        loading.value = false
+        snackbarColor.value = 'error'
+        receiveMessage.value = apiResponse.message
+        snackbar.value = true
+      }
+    }).catch(() => {
+      loading.value = false
+    }).finally(() => {
+       getDislikeCount()
+    })
   }
 </script>
 
@@ -970,8 +1034,15 @@
             <v-icon left>mdi-heart</v-icon>
             按讚數：{{ likesCount }}
           </v-chip>
-          <v-btn @click="toggleLike">
-            <v-icon>{{ liked === true ? 'mdi-heart' : 'mdi-heart-outline' }}</v-icon>
+          <v-chip class="ma-2">
+              <v-icon left>mdi-heart</v-icon>
+              倒讚數：{{ dislikesCount }}
+          </v-chip>
+         <v-btn @click="like">
+            <v-icon color="green">{{ liked === true ? 'mdi-heart' : 'mdi-heart-outline' }}</v-icon>
+          </v-btn>
+          <v-btn @click="dislike">
+            <v-icon color="red">{{ disliked === true ? 'mdi-heart' : 'mdi-heart-outline' }}</v-icon>
           </v-btn>
           <v-btn @click="toggleBookmark">
             <v-icon>{{ bookmarked === true ? 'mdi-bookmark' : 'mdi-bookmark-outline' }}</v-icon>
@@ -1016,7 +1087,10 @@
                 <v-btn icon @click="openAddComment()">
                   <v-icon color="green">mdi-pencil</v-icon>
                 </v-btn>
-                <v-btn icon @click="openEditComment(item.id)">
+                 <v-btn icon @click="openEditComment(item.id)">
+                  <v-icon color="red">mdi-edit</v-icon>
+                </v-btn>
+                <v-btn icon @click="handleDeleteComment(item.id)">
                   <v-icon color="red">mdi-delete</v-icon>
                 </v-btn>
               </template>

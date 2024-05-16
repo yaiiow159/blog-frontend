@@ -7,22 +7,11 @@
 // Composables
 import { createRouter, createWebHistory } from 'vue-router'
 import { setupLayouts } from 'virtual:generated-layouts'
+import { defineAsyncComponent } from 'vue'
 
-import HomePage from "@/pages/HomePage.vue";
-import LoginPage from "@/pages/LoginPage.vue";
-import ResetPassword from "@/pages/ResetPassword.vue";
-import NotFound from "@/pages/NotFound.vue";
-import CategoryPage from "@/pages/CategoryPage.vue";
-import ArticlePage from "@/pages/ArticlePage.vue";
 import Swal from "sweetalert2";
 import {useUserStore} from "@/stores/user";
-import TagPage from "@/pages/TagPage.vue";
-import UserPage from "@/pages/UserPage.vue";
-import UserGroupPage from "@/pages/UserGroupPage.vue";
-import RolePage from "@/pages/RolePage.vue";
-import NotificationPage from "@/pages/NotificationPage.vue";
-import LoginRecordPage from "@/pages/LoginRecordPage.vue";
-import RecentViewPage from "@/pages/RecentViewPage.vue";
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -31,67 +20,72 @@ const router = createRouter({
     {
       path: "/home",
       name: "Home",
-      component: HomePage,
+      component: defineAsyncComponent(() => import("@/pages/HomePage.vue")),
     },
     {
       path: "/",
       name: "Login",
-      component: LoginPage,
+      component: defineAsyncComponent(() => import("@/pages/LoginPage.vue")),
     },
     {
       path: "/reset",
       name: "Reset",
-      component: ResetPassword,
+      component: defineAsyncComponent(() => import("@/pages/ResetPassword.vue")),
     },
     {
+      meta: { requiresAuth: true },
       path: "/categories",
       name: "Category",
-      component: CategoryPage,
+      component: defineAsyncComponent(() => import("@/pages/CategoryPage.vue")),
     },
     {
       path: "/articles",
       name: "Article",
-      component: ArticlePage,
+      component: defineAsyncComponent(() => import("@/pages/ArticlePage.vue")),
     },
     {
+      meta: { requiresAuth: true },
       path: "/tags",
       name: "Tag",
-      component: TagPage,
+      component: defineAsyncComponent(() => import("@/pages/TagPage.vue")),
     },
     {
+      meta: { requiresAuth: true },
       path: "/users",
       name: "User",
-      component: UserPage,
+      component: defineAsyncComponent(() => import("@/pages/UserPage.vue")),
     },
     {
+      meta: { requiresAuth: true },
       path: "/groups",
       name: "Group",
-      component: UserGroupPage,
+      component: defineAsyncComponent(() => import("@/pages/UserGroupPage.vue")),
     },
     {
+      meta: { requiresAuth: true },
       path: "/roles",
       name: "Role",
-      component: RolePage
+      component: defineAsyncComponent(() => import("@/pages/RolePage.vue")),
     },
     {
       path: "/notifications",
       name: "Notification",
-      component: NotificationPage
+      component: defineAsyncComponent(() => import("@/pages/NotificationPage.vue")),
     },
     {
       path: "/recentViews",
       name: "RecentViews",
-      component: RecentViewPage
+      component: defineAsyncComponent(() => import("@/pages/RecentViewPage.vue")),
     },
     {
       path: "/loginRecords",
       name: "LoginRecords",
-      component: LoginRecordPage
+      component: defineAsyncComponent(() => import("@/pages/LoginRecordPage.vue")),
     },
     {
       path: "/404",
       name: "NotFound",
-      component: NotFound,
+      component: defineAsyncComponent(() => import("@/pages/NotFound.vue")),
     },
     {
       path: '/:catchAll(.*)',
@@ -103,6 +97,8 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const token = sessionStorage.getItem('userInfo') ? JSON.parse(sessionStorage.getItem('userInfo')).token : null
+  const userStore = useUserStore()
+  const roles = userStore.roles
   // 驗證jwt token過期時間
   if (token) {
     const now = new Date();
@@ -122,6 +118,16 @@ router.beforeEach((to, from, next) => {
         next({ name: 'Login', query: { redirect: to.fullPath } });
       });
     }
+  }
+  // 追加功能權限判斷 避免 權限問題
+  if (to.matched.some(record => record.meta.requiresAuth) && !roles.includes('admin')) {
+    Swal.fire({
+       icon: 'error',
+       title: '權限不足',
+       text: '您沒有權限使用此頁面',
+       showCancelButton: true,
+       cancelButtonText: '取消',
+     })
   }
   // 沒有jwt token 但是進入到登入頁面
   if (!token && !['/login', '/reset','/'].includes(to.path)) {

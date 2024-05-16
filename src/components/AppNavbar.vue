@@ -200,10 +200,14 @@
 
   async function handleChangePassword(password) {
     loading.value = true;
+
+    const formData = new FormData();
+    formData.append('oldPassword', password.oldPassword);
+    formData.append('newPassword', password.newPassword);
+
     await axiosInstance.put('/users/changePassword',
       {
-        oldPassword: password.oldPassword,
-        newPassword: password.newPassword
+         formData
       }
     )
       .then((response) => {
@@ -299,10 +303,14 @@
 
   async function handleContact() {
     loading.value = true
+
+    const formData = new FormData();
+    formData.append('fromUser', contactForm.value.fromUser);
+    formData.append('email', contactForm.value.email);
+    formData.append('message', contactForm.value.message);
+
     await axiosInstance.post('/communicate/contact', {
-      fromUser: contactForm.value.fromUser,
-      email: contactForm.value.email,
-      message: contactForm.value.message
+      formData
     }).then((response) => {
       const apiResponse = response.data
       if (apiResponse.result) {
