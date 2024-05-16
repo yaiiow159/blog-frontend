@@ -29,7 +29,7 @@
     { title: '分類', key: 'categoryName', sortable: true },
     { title: '描述', key: 'description', sortable: false },
     { title: '發布時間', key: 'createDate',sortable: true },
-    { title: '更新時間', key: 'updateDate',sortable: true },
+    { title: '更新時間', key: 'updDate',sortable: true },
     { title: '操作', key: 'actions',sortable: false },
   ]
   const tag = ref({

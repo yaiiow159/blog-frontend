@@ -1,7 +1,9 @@
 <script setup>
 import axiosInstance from "@/utils/request";
-import { ref, onMounted,watch } from 'vue';
+import { ref, onMounted } from 'vue';
+import {useUserStore} from "@/stores/user";
 
+const userStore = useUserStore()
 const breadcrumbs = ref([
   { text: '首頁', disabled: false, href: '/home' },
   { text: '使用者管理', disabled: true, href: '/users' },
@@ -23,7 +25,7 @@ const headers = [
   { title: '電子郵件', key: 'email',sortable: true },
   { title: '角色', key: 'roleNames', sortable: false },
   { title: '群組', key: 'groupName', sortable: false },
-  { title: '狀態', key: 'status', sortable: true },
+  { title: '狀態', key: 'isLocked', sortable: true },
   { title: '發布時間', key: 'createDate', sortable: true },
   { title: '更新時間', key: 'updDate',sortable: true },
   { title: '操作', key: 'actions',sortable: false },
@@ -43,7 +45,6 @@ const user = ref({
       status: '',
       groupId: Number(''),
       userGroupDto: {
-
       }
     }
 )
@@ -275,6 +276,49 @@ async function deleteCategory(id) {
     getUsers()
   })
 }
+
+async function handleEnable(id){
+  await axiosInstance.post('/users/unlocked/' + Number(id)).then((response) => {
+    const apiResponse = response.data
+    if(apiResponse.result) {
+      snackbarColor.value = 'success'
+      receiveMessage.value = apiResponse.message
+      snackbar.value = true
+    } else {
+      snackbarColor.value = 'error'
+      receiveMessage.value = apiResponse.message
+      snackbar.value = true
+    }
+  }).catch(() => {
+    snackbarColor.value = 'error'
+    receiveMessage.value = '發生錯誤'
+    snackbar.value = true
+  }).finally(() => {
+    getUsers()
+  })
+}
+
+async function handleDisable(id){
+    await axiosInstance.post('/users/locked/' + Number(id)).then((response) => {
+        const apiResponse = response.data
+        if(apiResponse.result) {
+            snackbarColor.value = 'error'
+            receiveMessage.value = apiResponse.message
+            snackbar.value = true
+        } else {
+            snackbarColor.value = 'error'
+            receiveMessage.value = apiResponse.message
+            snackbar.value = true
+        }
+    }).catch(() => {
+        snackbarColor.value = 'error'
+        receiveMessage.value = '發生錯誤'
+        snackbar.value = true
+    }).finally(() => {
+        getUsers()
+    })
+}
+
 </script>
 
 <template>
@@ -334,8 +378,8 @@ async function deleteCategory(id) {
             {{ role }}
           </v-chip>
         </template>
-        <template v-slot:item.status="{ item }">
-          <v-chip prepend-icon="mdi-check" v-if="!item.status" class="me-2 mb-2" size="small" color="success">
+        <template v-slot:item.isLocked="{ item }">
+          <v-chip prepend-icon="mdi-check" v-if="item.isLocked" class="me-2 mb-2" size="small" color="success">
             啟用
           </v-chip>
           <v-chip v-else prepend-icon="mdi-close" class="me-2 mb-2" size="small" color="error">
@@ -345,6 +389,10 @@ async function deleteCategory(id) {
         <template v-slot:item.actions="{ item }">
             <v-btn :bordered="false" class="me-2 mb-2 outlined" density="compact" color="edit" @click="handleEditTag(item.id)">編輯</v-btn>
             <v-btn :bordered="false" class="me-2 mb-2 outlined" density="compact" color="delete" @click="deleteCategory(item.id)">刪除</v-btn>
+            <v-btn-toggle :mandatory="false" v-model="item.status">
+              <v-btn :bordered="false" class="me-2 mb-2 outlined" density="compact" color="success" @click="handleEnable(item.id)">啟用</v-btn>
+              <v-btn :bordered="false" class="me-2 mb-2 outlined" density="compact" color="error" @click="handleDisable(item.id)">停用</v-btn>
+            </v-btn-toggle>
         </template>
         <template v-slot:bottom>
           <div class="text-center pt-2">

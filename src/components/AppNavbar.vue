@@ -1,5 +1,5 @@
 <script setup>
-  import { ref, computed } from 'vue'
+  import { ref } from 'vue'
   import axiosInstance from "@/utils/request";
   import {rules} from "@/utils/rules";
   import {useUserStore} from "@/stores/user";
@@ -200,14 +200,10 @@
 
   async function handleChangePassword(password) {
     loading.value = true;
-
-    const formData = new FormData();
-    formData.append('oldPassword', password.oldPassword);
-    formData.append('newPassword', password.newPassword);
-
     await axiosInstance.put('/users/changePassword',
       {
-         formData
+        oldPassword: password.oldPassword,
+        newPassword: password.newPassword
       }
     )
       .then((response) => {

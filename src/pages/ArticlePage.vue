@@ -165,6 +165,7 @@
     await getBookmarksCount(id)
     await getLikesCount(id)
     await getViewsCount(id)
+    await getDislikesCount(id)
     dialogViewArticle.value = true
   }
 
@@ -451,6 +452,21 @@
     })
   }
 
+  async function getDislikesCount(id) {
+    await axiosInstance.get('/posts/' + Number(id) + '/dislikesCount').then((response) => {
+      const apiResponse = response.data
+      if (apiResponse.result) {
+        dislikesCount.value = apiResponse.data
+      } else {
+        snackbarColor.value = 'error'
+        receiveMessage.value = apiResponse.message
+        snackbar.value = true
+      }
+    }).catch(() => {
+      loading.value = false
+    })
+  }
+
   async function getBookmarksCount(id) {
     await axiosInstance.get('/posts/' + Number(id) + '/bookmarksCount').then((response) => {
       const apiResponse = response.data
@@ -570,7 +586,7 @@
         snackbar.value = true
       }
     }).finally(() => {
-      getComments(article.value.id)
+      getComment(id)
     })
   }
 
@@ -588,7 +604,7 @@
         snackbar.value = true
       }
     }).finally(() => {
-      getComments(article.value.id)
+        getComment(id)
     })
   }
 
@@ -1074,24 +1090,27 @@
                   </v-avatar>
                 </div>
                 <div>{{ item.content }}</div>
+              </template><!-- 顯示當前留言 按讚數 跟倒讚數 -->
+              <template v-slot:icon>
+                <v-icon color="green">{{ item.likeds > 0 ? 'mdi-heart' : 'mdi-heart-outline' }}</v-icon>
+                <span>{{ item.likeds }}</span>
+                <v-icon color="red">{{ item.dislikes > 0 ? 'mdi-heart' : 'mdi-heart-outline' }}</v-icon>
+                <span>{{ item.dislikes }}</span>
               </template>
               <template v-slot:actions>
                 <v-btn icon @click="likeComment(item.id)">
-                  <v-icon color="red">{{ commentLiked ? 'mdi-thumb-up' : 'mdi-thumb-up-outline' }}</v-icon>
+                  <v-icon>{{ commentLiked ? 'mdi-thumb-up' : 'mdi-thumb-up-outline' }}</v-icon>
                 </v-btn>
                 <span>{{ item.likes }}</span>
                 <v-btn icon @click="dislikeComment(item.id)">
-                  <v-icon color="blue">{{ commentDisliked ? 'mdi-thumb-down' : 'mdi-thumb-down-outline' }}</v-icon>
+                  <v-icon>{{ commentDisliked ? 'mdi-thumb-down' : 'mdi-thumb-down-outline' }}</v-icon>
                 </v-btn>
                 <span>{{ item.dislikes }}</span>
-                <v-btn icon @click="openAddComment()">
-                  <v-icon color="green">mdi-pencil</v-icon>
-                </v-btn>
                  <v-btn icon @click="openEditComment(item.id)">
-                  <v-icon color="red">mdi-edit</v-icon>
+                  <v-icon>mdi-edit</v-icon>
                 </v-btn>
                 <v-btn icon @click="handleDeleteComment(item.id)">
-                  <v-icon color="red">mdi-delete</v-icon>
+                  <v-icon>mdi-delete</v-icon>
                 </v-btn>
               </template>
             </v-banner>

@@ -97,8 +97,6 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const token = sessionStorage.getItem('userInfo') ? JSON.parse(sessionStorage.getItem('userInfo')).token : null
-  const userStore = useUserStore()
-  const roles = userStore.roles
   // 驗證jwt token過期時間
   if (token) {
     const now = new Date();
@@ -118,16 +116,6 @@ router.beforeEach((to, from, next) => {
         next({ name: 'Login', query: { redirect: to.fullPath } });
       });
     }
-  }
-  // 追加功能權限判斷 避免 權限問題
-  if (to.matched.some(record => record.meta.requiresAuth) && !roles.includes('admin')) {
-    Swal.fire({
-       icon: 'error',
-       title: '權限不足',
-       text: '您沒有權限使用此頁面',
-       showCancelButton: true,
-       cancelButtonText: '取消',
-     })
   }
   // 沒有jwt token 但是進入到登入頁面
   if (!token && !['/login', '/reset','/'].includes(to.path)) {
