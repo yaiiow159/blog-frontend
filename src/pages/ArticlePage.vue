@@ -1082,15 +1082,16 @@
         >
           <template v-slot:default="{ item, index }">
             <v-banner raised>
-              <!-- 留言內容  如果 留言被檢舉過 顯示已被檢舉 並且屏蔽內容 -->
               <template v-slot:default>
                 <div>
                   <v-avatar color="grey lighten-3" size="36" class="mr-2">
                      <span>{{ item.name.charAt(0) }}</span>
                   </v-avatar>
                 </div>
-                <div>{{ item.content }}</div>
               </template><!-- 顯示當前留言 按讚數 跟倒讚數 -->
+               <template v-slot:text>
+                <v-card-text>{{ item.content }}</v-card-text>
+               </template>
               <template v-slot:icon>
                 <v-icon color="green">{{ item.likeds > 0 ? 'mdi-heart' : 'mdi-heart-outline' }}</v-icon>
                 <span>{{ item.likeds }}</span>

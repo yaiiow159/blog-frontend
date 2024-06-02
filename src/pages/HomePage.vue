@@ -23,125 +23,175 @@
       </v-col>
     </v-row>
 
-  <v-row>
-    <v-col cols="12">
-      <v-chip-group column>
-          <v-chip
-              v-for="tag in tags"
-              :key="tag.id"
-              :text="tag.name"
-              class="ma-2"
-              color="teal-lighten-2"
-              label
-              @click="getArticlesByTagId(tag.id)"
-          >
-          </v-chip>
-      </v-chip-group>
-    </v-col>
-  </v-row>
-
+    <v-row>
+      <v-col cols="6">
+        <v-btn-toggle v-model="displaySection" mandatory>
+          <v-btn value="latest">最新文章</v-btn>
+          <v-btn value="popular">熱門文章</v-btn>
+        </v-btn-toggle>
+      </v-col>
+    </v-row>
   <!-- 最新文章區 -->
   <v-row>
-    <v-col cols="6">
-      <v-switch
-          color="switch"
-          inset
-        v-model="openLatestArticles"
-        label="最新文章"
-        @change="getLatestArticles"
-      ></v-switch>
-    </v-col>
       <v-col v-show="openLatestArticles" cols="12">
         <v-card-title class="text-h5">最新文章區</v-card-title>
       </v-col>
-      <v-col v-show="openLatestArticles" cols="4" v-for="article in latestArticles" :key="article.id">
-        <v-card class="mx-auto elevation-2" max-width="400" max-height="600"  outlined :class="{'hover:elevation-6': true}">
-          <v-card-subtitle class="pb-2 pa-2">{{ article.categoryDto.name }}</v-card-subtitle>
-          <v-img :src="article.image ? article.image : '../assets/pic_default.jpg'" height="200px" class="white--text align-end" gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)">
-            <v-card-title>{{ article.title }}</v-card-title>
-          </v-img>
-          <v-card-subtitle class="pb-0 mt-2">{{ article.authorName }}</v-card-subtitle>
-          <v-card-text class="text--primary">
-            <div>{{ article.content.substring(0, 100) + '...' }}</div>
-            <v-chip-group>
-              <v-chip v-for="tag in article.tagDtoList" :key="tag.id" class="ma-1" color="primary" label text-color="white">
-                {{ tag.name }}
-              </v-chip>
-            </v-chip-group>
-          </v-card-text>
-          <v-card-actions>
-            <v-btn color="primary" text @click="viewArticle(article.id)">閱讀更多</v-btn>
-          </v-card-actions>
-        </v-card>
+      <v-col cols="12" v-for="article in latestArticles" :key="article.id">
+          <v-virtual-scroll>
+              <v-banner
+                      icon="mdi-account"
+                      lines="three"
+                      text="..."
+                      :stacked="false"
+                      class="my-4"
+              >
+                  <template v-slot:avatar>
+                      <v-avatar>
+                          {{ article.authorName }}
+                      </v-avatar>
+                  </template>
+                  <template v-slot:title>
+                      <div class="text-h6 font-weight-bold">{{ article.title }}</div>
+                  </template>
+                  <template v-slot:text>
+                      <div class="text-body-2 mb-2">
+                          類別: <strong>{{ article.categoryDto.name }}</strong>
+                      </div>
+                      <div class="text-body-2 mb-2">
+                          文章標籤:
+                          <v-chip-group>
+                              <v-chip
+                                      v-for="tag in article.tagDtoList"
+                                      :key="tag.id"
+                                      class="ma-1"
+                                      color="primary"
+                                      label
+                                      text-color="white"
+                              >
+                                  {{ tag.name }}
+                              </v-chip>
+                          </v-chip-group>
+                      </div>
+                      <div class="text-body-2 mb-2">
+                          文章內文: {{ article.content.substring(0, 100) }}...
+                      </div>
+                  </template>
+                  <template v-slot:actions>
+                      <v-btn color="primary" text @click="viewArticle(article.id)"
+                      >閱讀更多</v-btn
+                      >
+                  </template>
+              </v-banner>
+          </v-virtual-scroll>
       </v-col>
   </v-row>
-
-  <v-divider class="my-5"></v-divider>
-
   <!-- 熱門文章區 -->
   <v-row>
-    <v-col cols="6">
-      <v-switch
-          color="switch"
-          inset
-          v-model="openPopularArticles"
-          label="熱門文章"
-          @change="getPopularArticles"
-      ></v-switch>
-    </v-col>
       <v-col v-show="openPopularArticles" cols="12">
         <v-card-title class="text-h5">熱門文章區</v-card-title>
       </v-col>
-      <v-col v-show="openPopularArticles" cols="4" v-for="article in popularArticles" :key="article.id">
-        <v-card class="mx-auto elevation-2" max-width="400" max-height="600" outlined :class="{'hover:elevation-6': true}">
-          <v-card-subtitle class="pb-2 pa-2">{{ article.categoryDto.name }}</v-card-subtitle>
-          <v-img :src="article.imageUrl ? article.imageUrl : '../assets/pic_default.jpg'" height="200px" class="white--text align-end" gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)">
-            <v-card-title>{{ article.title }}</v-card-title>
-          </v-img>
-          <v-card-subtitle class="pb-0 mt-2">{{ article.authorName }}</v-card-subtitle>
-          <v-card-text class="text--primary">
-            <div>{{ article.content.substring(0, 100) + '...' }}</div>
-            <v-chip-group>
-              <v-chip v-for="tag in article.tagDtoList" :key="tag.id" class="ma-1" color="primary" label text-color="white">
-                {{ tag.name }}
-              </v-chip>
-            </v-chip-group>
-          </v-card-text>
-          <v-card-actions>
-            <v-btn color="primary" text @click="viewArticle(article.id)">閱讀更多</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-col>
+    <v-col cols="12" v-for="article in popularArticles" :key="article.id">
+      <v-virtual-scroll>
+        <v-banner
+          icon="mdi-account"
+          lines="three"
+          text="..."
+          :stacked="false"
+          class="my-4"
+        >
+          <template v-slot:avatar>
+            <v-avatar>
+              {{ article.authorName }}
+            </v-avatar>
+          </template>
+          <template v-slot:title>
+            <div class="text-h6 font-weight-bold">{{ article.title }}</div>
+          </template>
+          <template v-slot:text>
+            <div class="text-body-2 mb-2">
+              類別: <strong>{{ article.categoryDto.name }}</strong>
+            </div>
+            <div class="text-body-2 mb-2">
+              文章標籤:
+              <v-chip-group>
+                <v-chip
+                  v-for="tag in article.tagDtoList"
+                  :key="tag.id"
+                  class="ma-1"
+                  color="primary"
+                  label
+                  text-color="white"
+                >
+                  {{ tag.name }}
+                </v-chip>
+              </v-chip-group>
+            </div>
+            <div class="text-body-2 mb-2">
+              文章內文: {{ article.content.substring(0, 100) }}...
+            </div>
+          </template>
+          <template v-slot:actions>
+            <v-btn color="primary" text @click="viewArticle(article.id)"
+            >閱讀更多</v-btn
+            >
+          </template>
+        </v-banner>
+      </v-virtual-scroll>
+    </v-col>
   </v-row>
-
-
-  <v-divider class="my-5"></v-divider>
-
-    <v-row>
-        <v-col v-if="keyWordArticles.length > 0" cols="12">
-            <v-card-title class="text-h5">搜尋結果</v-card-title>
-        </v-col>
-        <v-col v-if="keyWordArticles.length > 0" cols="4" v-for="article in keyWordArticles" :key="article.id">
-            <v-card class="mx-auto elevation-2" max-width="400" max-height="600" outlined :class="{'hover:elevation-6': true}">
-                <v-card-subtitle class="pb-2 pa-2">{{ article.categoryDto.name }}</v-card-subtitle>
-                <v-img :src="article.imageUrl ? article.imageUrl : '../assets/pic_default.jpg'" height="200px" class="white--text align-end" gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)">
-                    <v-card-title>{{ article.title }}</v-card-title>
-                </v-img>
-                <v-card-subtitle class="pb-0 mt-2">{{ article.authorName }}</v-card-subtitle>
-                <v-card-text class="text--primary">
-                    <div>{{ article.content.substring(0, 100) + '...' }}</div>
-                    <v-chip-group>
-                        <v-chip v-for="tag in article.tagDtoList" :key="tag.id" class="ma-1" color="primary" label text-color="white">
-                            {{ tag.name }}
-                        </v-chip>
-                    </v-chip-group>
-                </v-card-text>
-                <v-card-actions>
-                    <v-btn color="primary" text @click="viewArticle(article.id)">閱讀更多</v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-col>
-    </v-row>
+  <v-row>
+    <v-col v-if="keyWordArticles.length > 0" cols="12">
+        <v-card-title class="text-h5">搜尋結果</v-card-title>
+    </v-col>
+    <v-col cols="12" v-for="article in keyWordArticles" :key="article.id">
+      <v-virtual-scroll>
+        <v-banner
+          icon="mdi-account"
+          lines="three"
+          text="..."
+          :stacked="false"
+          class="my-4"
+        >
+          <template v-slot:avatar>
+            <v-avatar>
+              {{ article.authorName }}
+            </v-avatar>
+          </template>
+          <template v-slot:title>
+            <div class="text-h6 font-weight-bold">{{ article.title }}</div>
+          </template>
+          <template v-slot:text>
+            <div class="text-body-2 mb-2">
+              類別: <strong>{{ article.categoryDto.name }}</strong>
+            </div>
+            <div class="text-body-2 mb-2">
+              文章標籤:
+              <v-chip-group>
+                <v-chip
+                  v-for="tag in article.tagDtoList"
+                  :key="tag.id"
+                  class="ma-1"
+                  color="primary"
+                  label
+                  text-color="white"
+                >
+                  {{ tag.name }}
+                </v-chip>
+              </v-chip-group>
+            </div>
+            <div class="text-body-2 mb-2">
+              文章內文: {{ article.content.substring(0, 100) }}...
+            </div>
+          </template>
+          <template v-slot:actions>
+            <v-btn color="primary" text @click="viewArticle(article.id)"
+            >閱讀更多</v-btn
+            >
+          </template>
+        </v-banner>
+      </v-virtual-scroll>
+    </v-col>
+  </v-row>
 
   <!-- 介紹關於我的區域 -->
   <PersonalResume/>
@@ -187,7 +237,7 @@
 </template>
 
 <script setup>
-  import { ref, onMounted } from 'vue';
+  import { ref, onMounted,watch } from 'vue';
   import axiosInstance from "@/utils/request";
 
   const articles = ref([]);
@@ -202,6 +252,7 @@
   const snackbarColor = ref('');
   const receiveMessage = ref('');
   const loading = ref(false);
+  const displaySection = ref('latestArticles');
 
   const search = ref('');
 
@@ -223,6 +274,16 @@
     await getLatestArticles()
     await getPopularArticles()
     await getTags()
+  })
+
+  watch(() => displaySection.value, async () => {
+    if(displaySection.value === 'latestArticles') {
+      await getLatestArticles()
+    }else if(displaySection.value === 'popularArticles') {
+      await getPopularArticles()
+    }else if(displaySection.value === 'keyWordArticles') {
+      await getArticlesByTagId(search.value)
+    }
   })
 
   async function getTags() {
@@ -305,11 +366,6 @@
          loading.value = false
          snackbarColor.value = 'success'
          latestArticles.value = apiResponse.data
-         for (let i = 0; i < latestArticles.value.length; i++) {
-           // 轉換byte[] 為 file
-           latestArticles.value[i].image =
-             lastArticles.value[i].imageBytes ? new File([latestArticles.value[i].imageBytes], latestArticles.value[i].imageFileName) : null
-         }
        } else {
          loading.value = false
          snackbarColor.value = 'error'
@@ -331,11 +387,6 @@
        if(apiResponse.result) {
          loading.value = false
          popularArticles.value = apiResponse.data
-         for (let i = 0; i < popularArticles.value.length; i++) {
-           // 轉換byte[] 為 file
-           popularArticles.value[i].image =
-             lastArticles.value[i].imageBytes ? new File([popularArticles.value[i].imageBytes], popularArticles.value[i].imageFileName) : null
-         }
        } else {
          loading.value = false
          snackbarColor.value = 'error'
