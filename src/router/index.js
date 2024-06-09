@@ -8,6 +8,22 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { setupLayouts } from 'virtual:generated-layouts'
 import { defineAsyncComponent } from 'vue'
+import HomePage from "@/pages/HomePage.vue";
+import LoginPage from "@/pages/LoginPage.vue";
+import ResetPassword from "@/pages/ResetPassword.vue";
+import CategoryPage from "@/pages/CategoryPage.vue";
+import ArticlePage from "@/pages/ArticlePage.vue";
+import TagPage from "@/pages/TagPage.vue";
+import UserPage from "@/pages/UserPage.vue";
+import UserGroupPage from "@/pages/UserGroupPage.vue";
+import RolePage from "@/pages/RolePage.vue";
+import NotificationPage from "@/pages/NotificationPage.vue";
+import LoginRecordPage from "@/pages/LoginRecordPage.vue";
+import RecentViewPage from "@/pages/RecentViewPage.vue";
+import NotFound from "@/pages/NotFound.vue";
+
+import NProgress from 'nprogress';
+import 'nprogress/nprogress.css';
 
 import Swal from "sweetalert2";
 import {useUserStore} from "@/stores/user";
@@ -20,72 +36,72 @@ const router = createRouter({
     {
       path: "/home",
       name: "Home",
-      component: defineAsyncComponent(() => import("@/pages/HomePage.vue")),
+      component: HomePage,
     },
     {
       path: "/",
       name: "Login",
-      component: defineAsyncComponent(() => import("@/pages/LoginPage.vue")),
+      component: LoginPage,
     },
     {
       path: "/reset",
       name: "Reset",
-      component: defineAsyncComponent(() => import("@/pages/ResetPassword.vue")),
+      component: ResetPassword,
     },
     {
       meta: { requiresAuth: true },
       path: "/categories",
       name: "Category",
-      component: defineAsyncComponent(() => import("@/pages/CategoryPage.vue")),
+      component: CategoryPage
     },
     {
       path: "/articles",
       name: "Article",
-      component: defineAsyncComponent(() => import("@/pages/ArticlePage.vue")),
+      component: ArticlePage
     },
     {
       meta: { requiresAuth: true },
       path: "/tags",
       name: "Tag",
-      component: defineAsyncComponent(() => import("@/pages/TagPage.vue")),
+      component: TagPage
     },
     {
       meta: { requiresAuth: true },
       path: "/users",
       name: "User",
-      component: defineAsyncComponent(() => import("@/pages/UserPage.vue")),
+      component: UserPage
     },
     {
       meta: { requiresAuth: true },
       path: "/groups",
       name: "Group",
-      component: defineAsyncComponent(() => import("@/pages/UserGroupPage.vue")),
+      component:UserGroupPage
     },
     {
       meta: { requiresAuth: true },
       path: "/roles",
       name: "Role",
-      component: defineAsyncComponent(() => import("@/pages/RolePage.vue")),
+      component: RolePage
     },
     {
       path: "/notifications",
       name: "Notification",
-      component: defineAsyncComponent(() => import("@/pages/NotificationPage.vue")),
+      component: NotificationPage
     },
     {
       path: "/recentViews",
       name: "RecentViews",
-      component: defineAsyncComponent(() => import("@/pages/RecentViewPage.vue")),
+      component:RecentViewPage
     },
     {
       path: "/loginRecords",
       name: "LoginRecords",
-      component: defineAsyncComponent(() => import("@/pages/LoginRecordPage.vue")),
+      component: LoginRecordPage
     },
     {
       path: "/404",
       name: "NotFound",
-      component: defineAsyncComponent(() => import("@/pages/NotFound.vue")),
+      component: NotFound
     },
     {
       path: '/:catchAll(.*)',
@@ -122,6 +138,11 @@ router.beforeEach((to, from, next) => {
     next({name: 'Login', query: {redirect: to.fullPath}});
     return;
   }
+  NProgress.start();
   next();
+});
+
+router.afterEach(() => {
+  NProgress.done();
 });
 export default router

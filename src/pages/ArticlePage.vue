@@ -47,6 +47,7 @@
     name: '',
     content: '',
     isReport: false,
+    postId: Number(''),
     reason: '',
   })
   const commentLiked = ref(false)
@@ -402,6 +403,7 @@
     })
   }
 
+
   async function addReview(id) {
     await axiosInstance.post('/recentViews', {
       postId: Number(id),
@@ -502,6 +504,26 @@
       }
     }).catch(() => {
       loading.value = false
+    }).finally(() => {
+      getComments(article.value.id)
+    })
+  }
+
+  async function reportComment() {
+    loading.value = true
+    await axiosInstance.put('/posts/' + Number(article.value.id) + '/comments/' + Number(comment.value.id) + '/reports').then((response) => {
+      const apiResponse = response.data
+      if (apiResponse.result) {
+        loading.value = false
+        snackbarColor.value = 'success'
+        receiveMessage.value = apiResponse.message
+        snackbar.value = true
+      } else {
+        loading.value = false
+        snackbarColor.value = 'error'
+        receiveMessage.value = apiResponse.message
+        snackbar.value = true
+      }
     }).finally(() => {
       getComments(article.value.id)
     })
@@ -759,7 +781,7 @@
         snackbarColor.value = 'success'
         receiveMessage.value = apiResponse.message
         snackbar.value = true
-        liked.value = false
+        disliked.value = false
       } else {
         loading.value = false
         snackbarColor.value = 'error'
@@ -823,24 +845,24 @@
               flat
               single-line
               hide-details
-              class="me-2 mb-2"
-          ></v-text-field>
-          <v-btn color="search" class="me-2 mb-2 outlined" density="compact" size="large" @click="getArticles">查詢</v-btn>
-          <v-btn color="add" class="me-2 mb-2 outlined" density="compact" size="large" @click="handleAddArticle">新增</v-btn>
-          </v-card-title>
-          <v-data-table :headers="headers"
-                        :loading="loading"
-                        loading-text="載入資料中..."
-                        :items="articles"
-                        :items-per-page="pageable.pageSize"
-                        height="calc(100vh - 300px)">
-            <template v-slot:top>
-              <v-toolbar flat>
-                <v-toolbar-title>文章列表</v-toolbar-title>
-              </v-toolbar>
-            </template>
-            <template v-slot:item.status="{ item }">
-              <v-chip :color="item.status === '已發佈' ? 'success' : 'warning'">{{ item.status }}</v-chip>
+                  class="me-2 mb-2"
+                      ></v-text-field>
+                <v-btn color="search" class="me-2 mb-2 outlined" density="compact" size="large" @click="getArticles">查詢</v-btn>
+                <v-btn color="add" class="me-2 mb-2 outlined" density="compact" size="large" @click="handleAddArticle">新增</v-btn>
+                </v-card-title>
+                <v-data-table :headers="headers"
+                              :loading="loading"
+                              loading-text="載入資料中..."
+                              :items="articles"
+                              :items-per-page="pageable.pageSize"
+                              height="calc(100vh - 300px)">
+                  <template v-slot:top>
+                    <v-toolbar flat>
+                      <v-toolbar-title>文章列表</v-toolbar-title>
+                    </v-toolbar>
+                  </template>
+                  <template v-slot:item.status="{ item }">
+                    <v-chip :color="item.status === '已發佈' ? 'success' : 'warning'">{{ item.status }}</v-chip>
             </template>
             <template v-slot:item.content="{ item }">
               <div class="max-25" v-html="item.content.substring(0, 100) + '...'"></div>
@@ -1048,11 +1070,11 @@
           </v-chip>
           <v-chip class="ma-2">
             <v-icon left>mdi-heart</v-icon>
-            按讚數：{{ likesCount }}
+            喜歡：{{ likesCount }}
           </v-chip>
           <v-chip class="ma-2">
               <v-icon left>mdi-heart</v-icon>
-              倒讚數：{{ dislikesCount }}
+              不喜歡：{{ dislikesCount }}
           </v-chip>
          <v-btn @click="like">
             <v-icon color="green">{{ liked === true ? 'mdi-heart' : 'mdi-heart-outline' }}</v-icon>
@@ -1091,6 +1113,8 @@
               </template><!-- 顯示當前留言 按讚數 跟倒讚數 -->
                <template v-slot:text>
                 <v-card-text>{{ item.content }}</v-card-text>
+                <v-card-text class="text-caption grey--text ml-8">{{ index + 1 }} 樓</v-card-text>
+                <v-card-text class="text-caption grey--text ml-8">評論時間: {{ item.createDate }}</v-card-text>
                </template>
               <template v-slot:icon>
                 <v-icon color="green">{{ item.likeds > 0 ? 'mdi-heart' : 'mdi-heart-outline' }}</v-icon>
@@ -1108,7 +1132,10 @@
                 </v-btn>
                 <span>{{ item.dislikes }}</span>
                  <v-btn icon @click="openEditComment(item.id)">
-                  <v-icon>mdi-edit</v-icon>
+                  <v-icon>mdi-pencil</v-icon>
+                </v-btn>
+                <v-btn icon @click="openReportComment(item.id)">
+                  <v-icon>mdi-report</v-icon>
                 </v-btn>
                 <v-btn icon @click="handleDeleteComment(item.id)">
                   <v-icon>mdi-delete</v-icon>

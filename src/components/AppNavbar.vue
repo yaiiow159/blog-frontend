@@ -363,6 +363,9 @@
       <v-list density="compact" nav :color="$vuetify.display.mobile ? 'primary' : undefined">
         <v-list-item prepend-icon="mdi-email" title="聯繫我們" value="contact" @click="openContact"></v-list-item>
         <v-list-item prepend-icon="mdi-account" title="個人資訊" value="profile" @click="openUserProfile"></v-list-item>
+        <v-list-item prepend-icon="mdi-heart" title="收藏文章" value="favorite" @click="openFavorite"></v-list-item>
+        <v-list-item prepend-icon="mdi-arrow-left" title="個人文章" value="self" @click="openSelfArticles"></v-list-item>
+        <v-list-item prepend-icon="mdi-dashboard" title="個人儀表板" value="dashboard" @click="openDashboard"></v-list-item>
       </v-list>
     </v-menu>
   </v-app-bar>
@@ -395,7 +398,7 @@
     <v-list density="compact" nav>
       <v-list-item prepend-icon="mdi-file-document-multiple" title="文章管理" value="article" to="/articles">
       </v-list-item>
-      <v-list-item v-show="user.roles.includes('ROLE_ADMIN')" prepend-icon="mdi-folder" title="分類管理" value="category" to="/categories">
+      <v-list-item v-show="user.roles.includes('ROLE_ADMIN')" prepend-icon="mdi-folder" title="主題管理" value="category" to="/categories">
       </v-list-item>
       <v-list-item v-show="user.roles.includes('ROLE_ADMIN')" prepend-icon="mdi-tag" title="標籤管理" value="category" to="/tags">
       </v-list-item>
@@ -413,7 +416,12 @@
 
       <v-list-item prepend-icon="mdi-login" title="使用者登入紀錄" value="loginRecord" to="/loginRecords"></v-list-item>
       <v-list-item prepend-icon="mdi-eye" title="瀏覽文章記錄" value="reviewRecord" to="/recentViews"></v-list-item>
-    </v-list>
+
+      <v-divider :thickness='1' class="my-2"></v-divider>
+
+      <v-list-item v-show="user.roles.includes('ROLE_ADMIN')" prepend-icon="mdi-comment" title="評論審核" value="commentReview" to="/commentReview"></v-list-item>
+      <v-list-item v-show="user.roles.includes('ROLE_ADMIN')" prepend-icon="mdi-chart" title="儀表板" value="dashboard" to="/dashboard"></v-list-item>
+  </v-list>
 
   </v-navigation-drawer>
 

@@ -16,11 +16,11 @@ const loading = ref(false)
 const snackbar = ref(false)
 const snackbarColor = ref('')
 const receiveMessage = ref('')
-const search = ref({
-  username: '',
-  ipAddress: '',
-  action: '',
-})
+
+const searchFieldUsername = ref('')
+const searchFieldAction = ref('')
+const searchFieldIpAddress = ref('')
+
 const actions = [
   { text: '全部', value: null },
   { text: '登入', value: 'login' },
@@ -58,9 +58,9 @@ onMounted(async () => {
 async function getLoginRecords() {
   loading.value = true
   await axiosInstance.get('/loginRecords/' + user.account, {params: {
-      username: search.value.username,
-      ipAddress: search.value.ipAddress,
-      action: search.value.action,
+      username: searchFieldUsername.value,
+      ipAddress: searchFieldIpAddress.value,
+      action: searchFieldAction.value,
       page: pageable.value.pageNumber,
       pageSize: pageable.value.pageSize
     }}).then((response) => {
@@ -135,7 +135,7 @@ function resetLoginRecord() {
       使用者登入紀錄頁面
       <v-spacer></v-spacer>
       <v-text-field
-          v-model="search.username"
+          v-model="searchFieldUsername"
           density="compact"
           label="使用者名稱"
           prepend-inner-icon="mdi-magnify"
@@ -145,7 +145,7 @@ function resetLoginRecord() {
       ></v-text-field>
       <v-text-field
           class="ml-2"
-          v-model="search.ipAddress"
+          v-model="searchFieldIpAddress"
           density="compact"
           label="IP位址"
           prepend-inner-icon="mdi-magnify"
@@ -153,7 +153,7 @@ function resetLoginRecord() {
           flat
           single-line
       ></v-text-field>
-        <v-select class="ml-2" v-model="search.action" density="compact" label="執行動作" variant="solo-filled" flat
+        <v-select class="ml-2" v-model="searchFieldAction" density="compact" label="執行動作" variant="solo-filled" flat
           :item-title="item => item.text" :item-value="item => item.value" :items="actions">
           <template v-slot:label>
             執行動作

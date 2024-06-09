@@ -17,10 +17,10 @@ const receiveMessage = ref('')
 const userInfo = sessionStorage.getItem('userInfo');
 const user = JSON.parse(userInfo);
 
-const search = ref({
-  dateTime: null,
-  postId: Number(''),
-})
+const searchFieldTitle = ref('')
+const searchFieldAuthorName = ref('')
+const searchFieldAuthorEmail = ref('')
+
 const pageable = ref({
   totalElements: Number(0),
   totalPages: Number(0),
@@ -53,9 +53,10 @@ onMounted(async () => {
 async function getRecentViews() {
   loading.value = true
   await axiosInstance.get('/recentViews', {params: {
-      email: search.value.postId,
-      username: user.account,
-      postId: search.value.postId,
+      email: searchFieldAuthorEmail.value,
+      authorName: searchFieldAuthorName.value,
+      title: searchFieldTitle.value,
+      username: user.username,
       page: pageable.value.pageNumber,
       pageSize: pageable.value.pageSize
     }}).then((response) => {
@@ -126,9 +127,31 @@ function resetRecentView() {
       <v-text-field
           class="ml-2"
           hide-details
-          v-model="search.postId"
+          v-model="searchFieldAuthorName"
           density="compact"
-          label="文章序號"
+          label="作者名稱"
+          prepend-inner-icon="mdi-magnify"
+          variant="solo-filled"
+          flat
+          single-line
+      ></v-text-field>
+      <v-text-field
+          class="ml-2"
+          hide-details
+          v-model="searchFieldAuthorEmail"
+          density="compact"
+          label="作者郵件"
+          prepend-inner-icon="mdi-magnify"
+          variant="solo-filled"
+          flat
+          single-line
+      ></v-text-field>
+      <v-text-field
+          class="ml-2"
+          hide-details
+          v-model="searchFieldTitle"
+          density="compact"
+          label="標題"
           prepend-inner-icon="mdi-magnify"
           variant="solo-filled"
           flat

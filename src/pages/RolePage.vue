@@ -22,9 +22,9 @@ const headers = [
   { title: '更新時間', key: 'updDate',sortable: true },
   { title: '操作', key: 'actions',sortable: false },
 ]
-const search = ref({
-  name: '',
-})
+
+const searchFieldName = ref('')
+
 const pageable = ref({
   totalElements: Number(0),
   totalPages: Number(0),
@@ -43,7 +43,7 @@ async function getRoles() {
   loading.value = true
   await axiosInstance.get('/roles', {params:
     {
-      name: search.value.name,
+      name: searchFieldName.value,
       page: pageable.value.pageNumber,
       pageSize: pageable.value.pageSize
     }
@@ -194,7 +194,7 @@ async function deleteRole(id) {
         角色管理頁面
         <v-spacer></v-spacer>
         <v-text-field
-            v-model="search.name"
+            v-model="searchFieldName"
             density="compact"
             label="名稱"
             prepend-inner-icon="mdi-magnify"

@@ -20,10 +20,11 @@ const receiveMessage = ref('')
 const userGroups = ref([])
 const dialogAddGroup = ref(false)
 const dialogEditGroup = ref(false)
-const search = ref({
-  groupName: '',
-  reviewLevel: '',
-})
+
+const searchFieldName = ref('')
+const searchFieldReviewLevel = ref('')
+
+
 const pageable = ref({
   totalElements: Number(0),
   totalPages: Number(0),
@@ -52,8 +53,8 @@ async function getGroups() {
   loading.value = true
   await axiosInstance.get('/groups', {params:
     {
-      groupName: search.value.groupName,
-      reviewLevel: search.value.reviewLevel,
+      groupName: searchFieldName.value,
+      reviewLevel: searchFieldReviewLevel.value,
       page: pageable.value.pageNumber,
       pageSize: pageable.value.pageSize
     }
@@ -212,7 +213,7 @@ async function deleteGroup(id) {
         群組管理頁面
         <v-spacer></v-spacer>
         <v-text-field
-            v-model="search.groupName"
+            v-model="searchFieldName"
             density="compact"
             label="群組名稱"
             prepend-inner-icon="mdi-magnify"
@@ -221,7 +222,7 @@ async function deleteGroup(id) {
             single-line
             hide-details
         ></v-text-field>
-        <v-select v-model="search.reviewLevel" :items="reviewLevels"
+        <v-select v-model="searchFieldReviewLevel" :items="reviewLevels"
                   :item-title="reviewLevels.text"
                   :item-value="reviewLevels.value"
                   hide-details

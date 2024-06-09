@@ -2,6 +2,9 @@ import axios from "axios";
 import Swal from 'sweetalert2'
 import { useUserStore } from '@/stores/user';
 
+import NProgress from "nprogress";
+import "nprogress/nprogress.css";
+
 const axiosInstance = axios.create({
   baseURL: 'http://localhost:9090/api/v1/',
   withCredentials: true,
@@ -19,6 +22,7 @@ axiosInstance.interceptors.request.use(
     if(token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    NProgress.start();
     return config;
   },
   (error) => {
@@ -27,7 +31,10 @@ axiosInstance.interceptors.request.use(
 );
 
 axiosInstance.interceptors.response.use(
-  response => response,
+  response => {
+    NProgress.done();
+    return response;
+  },
   (error) => {
     // 通用错误处理函数
     const handleError = (title, text) => {
@@ -63,6 +70,7 @@ axiosInstance.interceptors.response.use(
     } else {
       handleError('請求錯誤', error.message);
     }
+    NProgress.done();
     return Promise.reject(error);
   }
 );

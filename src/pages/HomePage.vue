@@ -8,9 +8,24 @@
         </v-breadcrumbs-item>
       </template>
     </v-breadcrumbs>
-    <v-row class="mt-5 mb-5">
-      <v-col cols="12" md="6">
-        <v-text-field
+
+   <!-- 輪播圖片區 -->
+    <v-carousel
+      cycle
+      height="600"
+      show-arrows-on-hover
+    >
+      <v-carousel-item
+        v-for="(item, i) in items"
+        :key="i"
+        :lazy-src="item.src"
+      ></v-carousel-item>
+    </v-carousel>
+
+  <!-- 搜尋文章區 -->
+  <v-row class="mt-5 mb-5">
+    <v-col cols="12" md="6">
+      <v-text-field
           v-model="search"
           label="搜尋文章"
           single-line
@@ -19,9 +34,9 @@
           class="rounded-xl"
           append-icon="mdi-magnify"
           @click:append="searchArticles"
-        ></v-text-field>
-      </v-col>
-    </v-row>
+      ></v-text-field>
+    </v-col>
+  </v-row>
 
     <v-row>
       <v-col cols="6">
@@ -30,78 +45,81 @@
           <v-btn value="popular">熱門文章</v-btn>
         </v-btn-toggle>
       </v-col>
+      <v-col cols="6">
+        <v-chip-group column>
+          <v-chip
+              v-for="tag in tags"
+              :key="tag.id"
+              :value="tag.name"
+              @click="getArticlesByTagId(tag.id)"
+          >
+            {{ tag.name }}
+          </v-chip>
+        </v-chip-group>
+      </v-col>
     </v-row>
   <!-- 最新文章區 -->
-  <v-row>
-      <v-col v-show="openLatestArticles" cols="12">
+  <v-row v-show="displaySection === 'latest'">
+      <v-col cols="12">
         <v-card-title class="text-h5">最新文章區</v-card-title>
       </v-col>
       <v-col cols="12" v-for="article in latestArticles" :key="article.id">
-          <v-virtual-scroll>
-              <v-banner
-                      icon="mdi-account"
-                      lines="three"
-                      text="..."
-                      :stacked="false"
-                      class="my-4"
-              >
-                  <template v-slot:avatar>
-                      <v-avatar>
-                          {{ article.authorName }}
-                      </v-avatar>
-                  </template>
-                  <template v-slot:title>
-                      <div class="text-h6 font-weight-bold">{{ article.title }}</div>
-                  </template>
-                  <template v-slot:text>
-                      <div class="text-body-2 mb-2">
-                          類別: <strong>{{ article.categoryDto.name }}</strong>
-                      </div>
-                      <div class="text-body-2 mb-2">
-                          文章標籤:
-                          <v-chip-group>
-                              <v-chip
-                                      v-for="tag in article.tagDtoList"
-                                      :key="tag.id"
-                                      class="ma-1"
-                                      color="primary"
-                                      label
-                                      text-color="white"
-                              >
-                                  {{ tag.name }}
-                              </v-chip>
-                          </v-chip-group>
-                      </div>
-                      <div class="text-body-2 mb-2">
-                          文章內文: {{ article.content.substring(0, 100) }}...
-                      </div>
-                  </template>
-                  <template v-slot:actions>
-                      <v-btn color="primary" text @click="viewArticle(article.id)"
-                      >閱讀更多</v-btn
-                      >
-                  </template>
-              </v-banner>
-          </v-virtual-scroll>
+          <v-banner
+                  raised
+                  class="my-1"
+          >
+              <template v-slot:default>
+                  <v-avatar color="grey lighten-3" size="36" class="mr-2">
+                      <span>{{ article.authorName.charAt(0) }}</span>
+                  </v-avatar>
+              </template>
+              <template v-slot:title>
+                  <div class="text-h6 font-weight-bold">{{ article.title }}</div>
+              </template>
+              <template v-slot:text>
+                  <div class="text-body-2 mb-2">
+                      類別: <strong>{{ article.categoryDto.name }}</strong>
+                  </div>
+                  <div class="text-body-2 mb-2">
+                      文章標籤:
+                      <v-chip-group>
+                          <v-chip
+                                  v-for="tag in article.tagDtoList"
+                                  :key="tag.id"
+                                  class="ma-1"
+                                  color="primary"
+                                  label
+                                  text-color="white"
+                          >
+                              <span>{{ tag.name ? tag.name : '無標籤' }}></span>
+                          </v-chip>
+                      </v-chip-group>
+                  </div>
+                  <div class="text-body-2 mb-2">
+                      文章內文: {{ article.content.substring(0, 100) }}...
+                  </div>
+              </template>
+              <template v-slot:actions>
+                  <v-btn color="primary" text @click="viewArticle(article.id)"
+                  >閱讀更多</v-btn
+                  >
+              </template>
+          </v-banner>
       </v-col>
   </v-row>
   <!-- 熱門文章區 -->
-  <v-row>
-      <v-col v-show="openPopularArticles" cols="12">
+  <v-row v-show="displaySection === 'popular'">
+      <v-col cols="12">
         <v-card-title class="text-h5">熱門文章區</v-card-title>
       </v-col>
     <v-col cols="12" v-for="article in popularArticles" :key="article.id">
-      <v-virtual-scroll>
         <v-banner
-          icon="mdi-account"
-          lines="three"
-          text="..."
-          :stacked="false"
-          class="my-4"
+          raised
+          class="my-1"
         >
-          <template v-slot:avatar>
-            <v-avatar>
-              {{ article.authorName }}
+          <template v-slot:default>
+              <v-avatar color="grey lighten-3" size="36" class="mr-2">
+                  <span>{{ article.authorName.charAt(0) }}</span>
             </v-avatar>
           </template>
           <template v-slot:title>
@@ -136,7 +154,6 @@
             >
           </template>
         </v-banner>
-      </v-virtual-scroll>
     </v-col>
   </v-row>
   <v-row>
@@ -144,18 +161,16 @@
         <v-card-title class="text-h5">搜尋結果</v-card-title>
     </v-col>
     <v-col cols="12" v-for="article in keyWordArticles" :key="article.id">
-      <v-virtual-scroll>
         <v-banner
-          icon="mdi-account"
-          lines="three"
-          text="..."
-          :stacked="false"
-          class="my-4"
+          raised
+          class="my-1"
         >
-          <template v-slot:avatar>
-            <v-avatar>
-              {{ article.authorName }}
-            </v-avatar>
+          <template v-slot:default>
+            <div>
+              <v-avatar color="grey lighten-3" size="36" class="mr-2">
+                <span>{{ article.authorName.charAt(0) }}</span>
+              </v-avatar>
+            </div>
           </template>
           <template v-slot:title>
             <div class="text-h6 font-weight-bold">{{ article.title }}</div>
@@ -189,7 +204,6 @@
             >
           </template>
         </v-banner>
-      </v-virtual-scroll>
     </v-col>
   </v-row>
 
@@ -205,22 +219,14 @@
         <v-container fluid>
           <v-row>
             <v-col cols="12" md="6">
-              <v-img
-                  :src="article.imageUrl ? article.imageUrl : '../assets/no-image-available.jfif'"
-                  aspect-ratio="4/3"
-                  class="elevation-2"
-                  @error="article.imageUrl = '../assets/no-image-available.jfif'">
-              </v-img>
-            </v-col>
-            <v-col cols="12" md="6">
               <v-list dense>
                 <v-list-item>
-                    <v-list-item-title class="text-h5 font-weight-bold ma-2">標題: {{ article.title }}</v-list-item-title>
+                    <v-list-item-title class="text-h5 font-weight-bold mb-2">標題: {{ article.title }}</v-list-item-title>
                     <v-list-item-title class="font-weight-bold mb-2">作者: {{ article.authorName }}</v-list-item-title>
                     <v-list-item-subtitle class="mb-2">作者郵箱: {{ article.authorEmail }}</v-list-item-subtitle>
                 </v-list-item>
               </v-list>
-              <div style="max-height: 600px; overflow-y: auto; margin-left: 10px">
+              <div style="max-height: 600px; overflow-y: auto; margin-left: 20px;">
                 <span class="text-h6 font-weight-bold">文章内容:</span>
                 <p>{{ article.content }}</p>
               </div>
@@ -237,15 +243,21 @@
 </template>
 
 <script setup>
-  import { ref, onMounted,watch } from 'vue';
+  import { ref, onMounted } from 'vue';
   import axiosInstance from "@/utils/request";
+
+  const items = ref([
+    { src: 'https://cdn.vuetifyjs.com/images/carousel/squirrel.jpg'},
+    { src: 'https://cdn.vuetifyjs.com/images/carousel/sky.jpg'},
+    { src: 'https://cdn.vuetifyjs.com/images/carousel/bird.jpg'},
+    { src: 'https://cdn.vuetifyjs.com/images/carousel/planet.jpg'},
+    { src: 'https://cdn.vuetifyjs.com/images/carousel/hulk.jpg'},
+  ]);
 
   const articles = ref([]);
   const tags = ref([]);
   const keyWordArticles = ref([]);
 
-  const openPopularArticles = ref(true);
-  const openLatestArticles = ref(true);
   const viewArticleDialog = ref(false);
 
   const snackbar = ref(false);
@@ -273,21 +285,11 @@
   onMounted(async () => {
     await getLatestArticles()
     await getPopularArticles()
-    await getTags()
+    await getHotTags()
   })
 
-  watch(() => displaySection.value, async () => {
-    if(displaySection.value === 'latestArticles') {
-      await getLatestArticles()
-    }else if(displaySection.value === 'popularArticles') {
-      await getPopularArticles()
-    }else if(displaySection.value === 'keyWordArticles') {
-      await getArticlesByTagId(search.value)
-    }
-  })
-
-  async function getTags() {
-    await axiosInstance.get('/tags/findList').then((response) => {
+  async function getHotTags() {
+    await axiosInstance.get('/tags/findHotTag').then((response) => {
       const apiResponse = response.data
       if(apiResponse.result) {
         tags.value = apiResponse.data

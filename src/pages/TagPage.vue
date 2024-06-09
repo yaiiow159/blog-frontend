@@ -13,9 +13,8 @@
   const snackbarColor = ref('')
   const receiveMessage = ref('')
 
-  const search = ref({
-    name: '',
-  })
+  const searchFieldName = ref('')
+
   const pageable = ref({
     totalElements: Number(0),
     totalPages: Number(0),
@@ -71,7 +70,7 @@
     loading.value = true
     await axiosInstance.get('/tags', {params:
         {
-          name: search.value.name,
+          name: searchFieldName.value,
           page: pageable.value.pageNumber,
           pageSize: pageable.value.pageSize
         }
@@ -239,7 +238,7 @@
         標籤管理頁面
         <v-spacer></v-spacer>
         <v-text-field
-            v-model="search.name"
+            v-model="searchFieldName"
             density="compact"
             label="名稱"
             prepend-inner-icon="mdi-magnify"

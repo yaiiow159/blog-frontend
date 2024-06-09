@@ -17,12 +17,10 @@ const loading = ref(false)
 const snackbar = ref(false)
 const snackbarColor = ref('')
 const receiveMessage = ref('')
-const search = ref({
-  name: '',
-  email: '',
-  subject: '',
-  isRead: '',
-})
+const searchFieldName = ref('')
+const searchFieldSubject = ref('')
+const searchFieldEmail = ref('')
+const searchFieldIsRead = ref(false)
 const pageable = ref({
   totalElements: Number(0),
   totalPages: Number(0),
@@ -42,7 +40,10 @@ const headers = [
   { title: '信箱', key: 'email', sortable: false},
   { title: '主旨', key: 'subject', sortable: true},
   { title: '內容', key: 'content', sortable: false},
+  { title: '是否已讀', key: 'isRead', sortable: true},
+  { title: '是否寄送', key: 'isSend',sortable: true},
   { title: '發布時間', key: 'createDate',sortable: true},
+  { title: '更新時間', key: 'updDate',sortable: true},
   { title: '操作', key: 'actions',sortable: false},
 ]
 const notification = ref({
@@ -50,7 +51,9 @@ const notification = ref({
   name: '',
   email: '',
   subject: '',
-  content: ''
+  content: '',
+  isRead: false,
+  isSend: false
 })
 onMounted(async () => {
   await getNotifications()
@@ -58,10 +61,10 @@ onMounted(async () => {
 async function getNotifications() {
   loading.value = true
   await axiosInstance.get('/notifications/' + user.account, {params: {
-      name: search.value.name,
-      email: search.value.email,
-      subject: search.value.subject,
-      isRead: !!search.value.isRead,
+      name: searchFieldName.value,
+      email: searchFieldEmail.value,
+      subject: searchFieldSubject.value,
+      isRead: searchFieldIsRead.value,
       page: pageable.value.pageNumber,
       pageSize: pageable.value.pageSize
     }}).then((response) => {
@@ -129,7 +132,7 @@ function resetNotification() {
       郵件通知頁面
       <v-spacer></v-spacer>
       <v-text-field
-          v-model="search.name"
+          v-model="searchFieldName"
           density="compact"
           label="名稱"
           prepend-inner-icon="mdi-magnify"
@@ -141,7 +144,7 @@ function resetNotification() {
       <v-text-field
           class="ml-2"
           hide-details
-          v-model="search.email"
+          v-model="searchFieldEmail"
           density="compact"
           label="信箱"
           prepend-inner-icon="mdi-magnify"
@@ -152,7 +155,7 @@ function resetNotification() {
       <v-text-field
           class="ml-2"
       hide-details
-      v-model="search.subject"
+      v-model="searchFieldSubject"
       density="compact"
       label="標題"
       prepend-inner-icon="mdi-magnify"
@@ -160,7 +163,7 @@ function resetNotification() {
       flat
       single-line
       ></v-text-field>
-      <v-select class="ml-2" v-model="search.isRead" density="compact" label="是否已讀" variant="solo-filled"
+      <v-select class="ml-2" v-model="searchFieldIsRead" density="compact" label="是否已讀" variant="solo-filled"
                 flat
                 single-line :items="isReads" :item-title="item => item.text" :item-value="item => item.value">
       </v-select>
@@ -168,7 +171,7 @@ function resetNotification() {
       <v-btn :bordered="false" color="search" class="mr-2 outlined" size="large" density="compact" @click="getNotifications">查詢</v-btn>
     </v-card-title>
     <v-data-table multi-sort
-                  :sort-by="[{ key: 'name', order: 'asc'}, { key: 'id', order: 'asc'}, { key: 'isRead', order: 'desc'}]"
+                  :sort-by="[{ key: 'name', order: 'asc'}, { key: 'id', order: 'asc'}, { key: 'isRead', order: 'desc'}, { key: 'updDate', order: 'desc'}, { key: 'createDate', order: 'desc'}, { key: 'isSend', order: 'asc'}]"
                   :headers="headers"
                   :loading="loading"
                   loading-text="載入資料中..."
@@ -179,6 +182,12 @@ function resetNotification() {
         <v-toolbar flat>
           <v-toolbar-title>郵件通知列表</v-toolbar-title>
         </v-toolbar>
+      </template>
+      <template v-slot:item.isRead="{ item }">
+        <v-chip :color="item.isRead ? 'success' : 'warning'" variant="outlined" density="compact">{{ item.isRead ? '已讀' : '未讀' }}</v-chip>
+      </template>
+      <template v-slot:item.isSend="{ item }">
+        <v-chip :color="item.isSend ? 'success' : 'warning'" variant="outlined" density="compact">{{ item.isSend ? '已發送' : '未發送' }}</v-chip>
       </template>
       <template v-slot:item.actions="{ item }">
         <v-btn  class="mr-2 outlined" density="compact" color="edit" @click="viewNotification(item.id)">查看詳情</v-btn>

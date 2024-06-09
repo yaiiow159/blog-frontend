@@ -4,7 +4,7 @@
 
     const breadcrumbs = ref([
         { text: '首頁', disabled: false, href: '/home' },
-        { text: '分類管理', disabled: true, href: '/categories' },
+        { text: '主題管理', disabled: true, href: '/categories' },
     ])
     const name = ref('')
     const loading = ref(false)
@@ -12,9 +12,8 @@
     const snackbar = ref(false)
     const snackbarColor = ref('')
     const receiveMessage = ref('')
-    const search = ref({
-        name: '',
-    })
+    const searchFieldName = ref('')
+    const searchFieldDescription = ref('')
     const pageable = ref({
       totalElements: Number(0),
       totalPages: Number(0),
@@ -43,7 +42,8 @@
     async function getCategories() {
         loading.value = true
         await axiosInstance.get('/categories', {params: {
-            name: search.value.name,
+            name: searchFieldName.value,
+            description: searchFieldDescription.value,
             page: pageable.value.pageNumber,
             pageSize: pageable.value.pageSize
           }}).then((response) => {
@@ -186,12 +186,23 @@
     <v-card flat full-width>
       <v-card-title class="d-flex align-center pe-2">
         <v-icon icon="mdi-folder"></v-icon> &nbsp;
-        分類管理頁面
+        主題管理頁面
         <v-spacer></v-spacer>
         <v-text-field
-            v-model="search.name"
+            v-model="searchFieldName"
             density="compact"
             label="名稱"
+            prepend-inner-icon="mdi-magnify"
+            variant="solo-filled"
+            flat
+            hide-details
+            single-line
+        ></v-text-field>
+        <v-text-field
+            class="me-2"
+            v-model="searchFieldDescription"
+            density="compact"
+            label="描述"
             prepend-inner-icon="mdi-magnify"
             variant="solo-filled"
             flat

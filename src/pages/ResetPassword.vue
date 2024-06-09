@@ -69,7 +69,7 @@ const confirmPasswordRules = [
 ];
 const verificationCodeRules = [
   v => !!v || '驗證碼是必填的',
-  v => (v && v.length === 4) || '驗證碼必須是6位數字',
+  v => (v && v.length === 4) || '驗證碼必須是4位數字',
 ];
 
 async function resetPassword() {

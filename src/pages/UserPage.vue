@@ -48,10 +48,10 @@ const user = ref({
       }
     }
 )
-const search = ref({
-  name: '',
-  email: '',
-})
+
+const searchFieldName = ref('')
+const searchFieldEmail = ref('')
+
 const pageable = ref({
   totalElements: Number(0),
   totalPages: Number(0),
@@ -76,8 +76,8 @@ async function getUsers() {
   loading.value = true
   await axiosInstance.get('/users', {params:
         {
-          name: search.value.name,
-          email: search.value.email,
+          name: searchFieldName.value,
+          email: searchFieldEmail.value,
           page: pageable.value.pageNumber,
           pageSize: pageable.value.pageSize
         }
@@ -338,7 +338,7 @@ async function handleDisable(id){
         <v-spacer></v-spacer>
         <v-text-field
             class="w-25"
-            v-model="search.name"
+            v-model="searchFieldName"
             density="compact"
             label="名稱"
             prepend-inner-icon="mdi-magnify"
@@ -349,7 +349,7 @@ async function handleDisable(id){
         ></v-text-field>
         <v-text-field
             class="ml-2 w-25"
-            v-model="search.email"
+            v-model="searchFieldEmail"
             density="compact"
             label="信箱"
             prepend-inner-icon="mdi-magnify"
@@ -379,7 +379,7 @@ async function handleDisable(id){
           </v-chip>
         </template>
         <template v-slot:item.isLocked="{ item }">
-          <v-chip prepend-icon="mdi-check" v-if="item.isLocked" class="me-2 mb-2" size="small" color="success">
+          <v-chip prepend-icon="mdi-check" v-if="item.isLocked !== 1" class="me-2 mb-2" size="small" color="success">
             啟用
           </v-chip>
           <v-chip v-else prepend-icon="mdi-close" class="me-2 mb-2" size="small" color="error">
