@@ -363,9 +363,9 @@
       <v-list density="compact" nav :color="$vuetify.display.mobile ? 'primary' : undefined">
         <v-list-item prepend-icon="mdi-email" title="聯繫我們" value="contact" @click="openContact"></v-list-item>
         <v-list-item prepend-icon="mdi-account" title="個人資訊" value="profile" @click="openUserProfile"></v-list-item>
-        <v-list-item prepend-icon="mdi-heart" title="收藏文章" value="favorite" @click="openFavorite"></v-list-item>
-        <v-list-item prepend-icon="mdi-arrow-left" title="個人文章" value="self" @click="openSelfArticles"></v-list-item>
-        <v-list-item prepend-icon="mdi-dashboard" title="個人儀表板" value="dashboard" @click="openDashboard"></v-list-item>
+        <v-list-item prepend-icon="mdi-heart" title="收藏文章" value="favorite" to="/favoriteArticles"></v-list-item>
+        <v-list-item prepend-icon="mdi-arrow-left" title="個人文章" value="self" to="/personalArticles"></v-list-item>
+        <v-list-item prepend-icon="mdi-dashboard" title="個人面板" value="dashboard" to="/personalDashboard"></v-list-item>
       </v-list>
     </v-menu>
   </v-app-bar>

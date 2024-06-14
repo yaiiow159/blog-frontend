@@ -7,7 +7,7 @@
 // Composables
 import { createRouter, createWebHistory } from 'vue-router'
 import { setupLayouts } from 'virtual:generated-layouts'
-import { defineAsyncComponent } from 'vue'
+
 import HomePage from "@/pages/HomePage.vue";
 import LoginPage from "@/pages/LoginPage.vue";
 import ResetPassword from "@/pages/ResetPassword.vue";
@@ -21,6 +21,8 @@ import NotificationPage from "@/pages/NotificationPage.vue";
 import LoginRecordPage from "@/pages/LoginRecordPage.vue";
 import RecentViewPage from "@/pages/RecentViewPage.vue";
 import NotFound from "@/pages/NotFound.vue";
+import PersonalArticles from '@/pages/PersonalArticles.vue';
+import FavoriteArticles from '@/pages/FavoriteArticles.vue';
 
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
@@ -58,6 +60,16 @@ const router = createRouter({
       path: "/articles",
       name: "Article",
       component: ArticlePage
+    },
+    {
+      path: "/personalArticles",
+      name: "PersonalArticles",
+      component: PersonalArticles
+    },
+    {
+      path: "/favoriteArticles",
+      name: "FavoriteArticles",
+      component: FavoriteArticles
     },
     {
       meta: { requiresAuth: true },

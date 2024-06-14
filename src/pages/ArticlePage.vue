@@ -41,6 +41,7 @@
   const bookmarksCount = ref(0)
   const likesCount = ref(0)
   const dislikesCount = ref(0)
+  const isSubscribe = ref(false)
 
   const comments = ref([])
   const comment = ref({
@@ -159,6 +160,29 @@
     })
   }
 
+  async function checkIfSubscribe(id) {
+    try {
+      await axiosInstance.get("/subscript/checkSubscription", 
+        {params: {postId: Number(id), username: user.account}}).then((response) => {
+      const apiResponse = response.data;
+      if(apiResponse.result) {
+        isSubscribe.value = apiResponse.data
+        if(isSubscribe.value === true) {
+          bookmarked.value = true
+        }
+      } else {
+        snackbarColor.value = 'error'
+        receiveMessage.value = apiResponse.message
+        snackbar.value = true
+      }
+    })
+    } catch(error) {
+      snackbarColor.value = 'error'
+      receiveMessage.value = error.message
+      snackbar.value = true
+    }
+  }
+
   async function handleViewArticle(id) {
     resetArticle()
     await getArticle(id)
@@ -167,6 +191,7 @@
     await getLikesCount(id)
     await getViewsCount(id)
     await getDislikesCount(id)
+    await checkIfSubscribe(id)
     dialogViewArticle.value = true
   }
 
@@ -708,6 +733,9 @@
       const apiResponse = response.data
       if (apiResponse.result) {
         bookmarksCount.value = apiResponse.data
+        receiveMessage.value = apiResponse.message
+        snackbarColor.value = 'success'
+        snackbar.value = true
       } else {
         snackbarColor.value = 'error'
         receiveMessage.value = apiResponse.message
@@ -1083,6 +1111,8 @@
             <v-icon color="red">{{ disliked === true ? 'mdi-heart' : 'mdi-heart-outline' }}</v-icon>
           </v-btn>
           <v-btn @click="toggleBookmark">
+            <!-- 如果已經收藏 則顯示outline bookmarked 為true -->
+            <!-- 如果還沒收藏 則顯示outline bookmarked 為false -->
             <v-icon>{{ bookmarked === true ? 'mdi-bookmark' : 'mdi-bookmark-outline' }}</v-icon>
           </v-btn>
           <!-- 新增留言 -->
@@ -1197,7 +1227,7 @@
 
     <v-dialog v-model="dialogReportComment" persistent max-width="400px">
       <v-card>
-        <v-card-title>編輯留言</v-card-title>
+        <v-card-title>檢舉留言</v-card-title>
         <v-card-text>
           <v-text-field
               v-model="user.account"
