@@ -4,7 +4,7 @@
     <v-container>
       <v-row align="center" justify="center">
         <v-col cols="12" sm="8" md="6">
-          <v-card :loading="loading" elevation="5" class="mx-auto" max-width="600px">
+          <v-card :loading="loading" elevation="5" class="mx-auto" max-width="600">
             <v-toolbar color="dark">
               <v-toolbar-title>登入</v-toolbar-title>
             </v-toolbar>
@@ -12,6 +12,9 @@
               <v-card-text>
                 <v-text-field
                   v-model.trim="loginForm.username"
+                  @focus="checkFocus('username')"
+                  @input="checkInput('username', $event)"
+                  @update:modelValue="checkUpdate('username', $event)"
                   label="姓名"
                   prepend-icon="mdi-account"
                   :rules="[commonRules.required, commonRules.usernameRule]"
@@ -20,6 +23,9 @@
                 />
                 <v-text-field
                   v-model.trim="loginForm.password"
+                  @focus="checkFocus('password')"
+                  @input="checkInput('password', $event)"
+                  @update:modelValue="checkUpdate('password', $event)"
                   label="密碼"
                   prepend-icon="mdi-lock"
                   type="password"
@@ -69,7 +75,7 @@
   </div>
 
   <!-- 忘記密碼dialog -->
-  <v-dialog v-model="forgotPasswordDialog" persistent max-width="600px">
+  <v-dialog v-model="forgotPasswordDialog" persistent max-width="600">
     <v-card class="px-5 py-5" flat :loading="dialogLoading">
       <v-card-title class="text-h5">忘記密碼</v-card-title>
       <v-form ref="forgotPasswordForm" v-model="forgotPasswordFormValid" validate-on="lazy blur"
@@ -101,7 +107,7 @@
   </v-dialog>
 
   <!-- 註冊dialog -->
-  <v-dialog v-model="signUpDialog" persistent max-width="600px" transition="dialog-bottom-transition">
+  <v-dialog v-model="signUpDialog" persistent max-width="600" transition="dialog-bottom-transition">
     <v-card :loading="dialogLoading" class="px-5 py-5">
       <v-card-title class="text-h5">註冊</v-card-title>
       <v-form ref="registerForm" v-model="signUpFormValid" validate-on="lazy blur" @submit.prevent="handleSignUp">
@@ -319,6 +325,29 @@ const handleSignUp = async () => {
     loading.value = false;
   }
 };
+
+// 監聽數據變化
+watch(
+  () => [loginForm.username, loginForm.password, loginForm.captchaCode],
+  ([newUsername, newPassword, newCaptchaCode]) => {
+    console.log('loginForm.username 新數據', newUsername);
+    console.log('loginForm.password 新數據', newPassword);
+    console.log('loginForm.captchaCode 新數據', newCaptchaCode);
+  }
+);
+
+function checkFocus(field) {
+  console.log(`${field} 輸入開始`);
+}
+function checkInput(field, event) {
+  console.log(`${field} 欄位輸入:` +　'數值為:' + event.target.value);
+}
+
+function checkUpdate(field, event) {
+  console.log(`${field} 欄位更新:`　+ '數值為:' + event.target.value);
+}
+
+
 </script>
 
 <style scoped lang="sass">
