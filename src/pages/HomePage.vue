@@ -1,439 +1,288 @@
 <template>
-    <v-breadcrumbs bg-color="breadcrumb" active-color="primary" rounded :items="breadcrumbs" divider=">" >
-      <template v-slot:prepend>
-        <v-icon icon="mdi-home" size="small"></v-icon>
-      </template>
-      <template v-slot:item="{ item }">
-        <v-breadcrumbs-item :title="item.text" :href="item.href" :disabled="item.disabled">
-        </v-breadcrumbs-item>
-      </template>
-    </v-breadcrumbs>
+  <!-- 導覽列 -->
+  <BreadcrumbBar :items="breadcrumbs" />
 
-   <!-- 輪播圖片區 -->
-    <v-carousel
-      cycle
-      height="600"
-      show-arrows-on-hover
-    >
-      <v-carousel-item
-        v-for="(item, i) in items"
-        :key="i"
-        :lazy-src="item.src"
-      ></v-carousel-item>
-    </v-carousel>
+  <!-- 訊息顯示列 -->
+  <MessageSnakeBar :color="snackbar.color" :message="snackbar.message" />
 
   <!-- 搜尋文章區 -->
   <v-row class="mt-5 mb-5">
     <v-col cols="12" md="6">
       <v-text-field
-          v-model="search"
-          label="搜尋文章"
-          single-line
-          hide-details
-          clearable
-          class="rounded-xl"
-          append-icon="mdi-magnify"
-          @click:append="searchArticles"
-      ></v-text-field>
+        v-model="keyWord"
+        label="搜尋文章"
+        single-line
+        hide-details
+        clearable
+        class="rounded-xl"
+        append-icon="mdi-magnify"
+        @click:append="searchArticles"
+      />
     </v-col>
   </v-row>
 
-    <v-row>
-      <v-col cols="6">
-        <v-btn-toggle v-model="displaySection" mandatory>
-          <v-btn value="latest">最新文章</v-btn>
-          <v-btn value="popular">熱門文章</v-btn>
-        </v-btn-toggle>
-      </v-col>
-      <v-col cols="6">
-        <v-chip-group column>
-          <v-chip
-              v-for="tag in tags"
-              :key="tag.id"
-              :value="tag.name"
-              @click="getArticlesByTagId(tag.id)"
-          >
-            {{ tag.name }}
-          </v-chip>
-        </v-chip-group>
-      </v-col>
-    </v-row>
-  <!-- 最新文章區 -->
-  <v-row v-show="displaySection === 'latest'">
-      <v-col cols="12">
-        <v-card-title class="text-h5">最新文章區</v-card-title>
-      </v-col>
-      <v-col cols="12" v-for="article in latestArticles" :key="article.id">
-          <v-banner
-                  raised
-                  class="my-1"
-          >
-              <template v-slot:default>
-                  <v-avatar color="grey lighten-3" size="36" class="mr-2">
-                      <span>{{ article.authorName.charAt(0) }}</span>
-                  </v-avatar>
-              </template>
-              <template v-slot:title>
-                  <div class="text-h6 font-weight-bold">{{ article.title }}</div>
-              </template>
-              <template v-slot:text>
-                  <div class="text-body-2 mb-2">
-                      類別: <strong>{{ article.categoryDto.name }}</strong>
-                  </div>
-                  <div class="text-body-2 mb-2">
-                      文章標籤:
-                      <v-chip-group>
-                          <v-chip
-                                  v-for="tag in article.tagDtoList"
-                                  :key="tag.id"
-                                  class="ma-1"
-                                  color="primary"
-                                  label
-                                  text-color="white"
-                          >
-                              <span>{{ tag.name ? tag.name : '無標籤' }}></span>
-                          </v-chip>
-                      </v-chip-group>
-                  </div>
-                  <div class="text-body-2 mb-2">
-                      文章內文: {{ article.content.substring(0, 100) }}...
-                  </div>
-              </template>
-              <template v-slot:actions>
-                  <v-btn color="primary" text @click="viewArticle(article.id)"
-                  >閱讀更多</v-btn
-                  >
-              </template>
-          </v-banner>
-      </v-col>
-  </v-row>
-  <!-- 熱門文章區 -->
-  <v-row v-show="displaySection === 'popular'">
-      <v-col cols="12">
-        <v-card-title class="text-h5">熱門文章區</v-card-title>
-      </v-col>
-    <v-col cols="12" v-for="article in popularArticles" :key="article.id">
-        <v-banner
-          raised
-          class="my-1"
-        >
-          <template v-slot:default>
-              <v-avatar color="grey lighten-3" size="36" class="mr-2">
-                  <span>{{ article.authorName.charAt(0) }}</span>
-            </v-avatar>
-          </template>
-          <template v-slot:title>
-            <div class="text-h6 font-weight-bold">{{ article.title }}</div>
-          </template>
-          <template v-slot:text>
-            <div class="text-body-2 mb-2">
-              類別: <strong>{{ article.categoryDto.name }}</strong>
-            </div>
-            <div class="text-body-2 mb-2">
-              文章標籤:
-              <v-chip-group>
-                <v-chip
-                  v-for="tag in article.tagDtoList"
-                  :key="tag.id"
-                  class="ma-1"
-                  color="primary"
-                  label
-                  text-color="white"
-                >
-                  {{ tag.name }}
-                </v-chip>
-              </v-chip-group>
-            </div>
-            <div class="text-body-2 mb-2">
-              文章內文: {{ article.content.substring(0, 100) }}...
-            </div>
-          </template>
-          <template v-slot:actions>
-            <v-btn color="primary" text @click="viewArticle(article.id)"
-            >閱讀更多</v-btn
-            >
-          </template>
-        </v-banner>
-    </v-col>
-  </v-row>
+  <!-- 熱門標籤區 -->
   <v-row>
-    <v-col v-if="keyWordArticles.length > 0" cols="12">
-        <v-card-title class="text-h5">搜尋結果</v-card-title>
-    </v-col>
-    <v-col cols="12" v-for="article in keyWordArticles" :key="article.id">
-        <v-banner
-          raised
-          class="my-1"
+    <v-col cols="12">
+      <h2 class="text-h5 font-weight-bold mb-4">熱門標籤</h2>
+      <v-chip-group column>
+        <v-chip
+          v-for="tag in tags"
+          :key="tag.id"
+          :value="tag.name"
+          @click="getArticlesByTagId(tag.id)"
+          class="ma-1"
+          color="primary"
+          label
+          text-color="white"
         >
-          <template v-slot:default>
-            <div>
-              <v-avatar color="grey lighten-3" size="36" class="mr-2">
-                <span>{{ article.authorName.charAt(0) }}</span>
-              </v-avatar>
-            </div>
-          </template>
-          <template v-slot:title>
-            <div class="text-h6 font-weight-bold">{{ article.title }}</div>
-          </template>
-          <template v-slot:text>
-            <div class="text-body-2 mb-2">
-              類別: <strong>{{ article.categoryDto.name }}</strong>
-            </div>
-            <div class="text-body-2 mb-2">
-              文章標籤:
-              <v-chip-group>
-                <v-chip
-                  v-for="tag in article.tagDtoList"
-                  :key="tag.id"
-                  class="ma-1"
-                  color="primary"
-                  label
-                  text-color="white"
-                >
-                  {{ tag.name }}
-                </v-chip>
-              </v-chip-group>
-            </div>
-            <div class="text-body-2 mb-2">
-              文章內文: {{ article.content.substring(0, 100) }}...
-            </div>
-          </template>
-          <template v-slot:actions>
-            <v-btn color="primary" text @click="viewArticle(article.id)"
-            >閱讀更多</v-btn
-            >
-          </template>
-        </v-banner>
+          {{ tag.name }}
+        </v-chip>
+      </v-chip-group>
     </v-col>
   </v-row>
 
-  <!-- 介紹關於我的區域 -->
-  <PersonalResume/>
+  <!-- 文章區 -->
+  <v-row>
+    <v-col cols="12" md="6" lg="4">
+      <v-card>
+        <v-tabs
+          v-model="displaySection"
+          grow
+          bg-color="transparent"
+        >
+          <v-tab value="one">最新文章</v-tab>
+          <v-tab value="two">熱門文章</v-tab>
+        </v-tabs>
 
-  <v-progress-circular size="64" indeterminate color="primary" v-if="loading"></v-progress-circular>
+        <v-card-text>
+          <v-tabs-window v-model="displaySection">
+            <v-tabs-window-item value="latest">
+              <ArticleList :articles="latestArticles" title="最新文章" @view-article="viewArticle" />
+            </v-tabs-window-item>
+            <v-tabs-window-item value="popular">
+              <ArticleList :articles="popularArticles" title="熱門文章" @view-article="viewArticle" />
+            </v-tabs-window-item>
+          </v-tabs-window>
+        </v-card-text>
+      </v-card>
+    </v-col>
+  </v-row>
 
+  <!-- 搜尋結果區 -->
+  <ArticleSection
+    v-if="keyWordArticles.length > 0"
+    :articles="keyWordArticles"
+    title="搜尋結果"
+    @view-article="viewArticle"
+  />
 
-  <v-dialog v-model="viewArticleDialog" persistent fullscreen>
-    <v-card class="pa-5 rounded-xl elevation-5">
-      <v-card-text>
-        <v-container fluid>
-          <v-row>
-            <v-col cols="12" md="6">
-              <v-list dense>
-                <v-list-item>
-                    <v-list-item-title class="text-h5 font-weight-bold mb-2">標題: {{ article.title }}</v-list-item-title>
-                    <v-list-item-title class="font-weight-bold mb-2">作者: {{ article.authorName }}</v-list-item-title>
-                    <v-list-item-subtitle class="mb-2">作者郵箱: {{ article.authorEmail }}</v-list-item-subtitle>
-                </v-list-item>
-              </v-list>
-              <div style="max-height: 600px; overflow-y: auto; margin-left: 20px;">
-                <span class="text-h6 font-weight-bold">文章内容:</span>
-                <p>{{ article.content }}</p>
-              </div>
-            </v-col>
-          </v-row>
-        </v-container>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn color="cancel" text @click="viewArticleDialog = false">返回</v-btn>
-      </v-card-actions>
-    </v-card>
+  <!-- 文章詳情對話框 -->
+  <v-dialog v-model="viewArticleDialog" persistent fullscreen transition="dialog-bottom-transition">
+    <div class="article-container">
+      <div class="article-header">
+        <h1 class="article-title">{{ article.title }}</h1>
+        <h2 class="article-author">作者: {{ article.authorName }}</h2>
+        <h3 class="article-email">作者郵箱: {{ article.authorEmail }}</h3>
+      </div>
+      <div class="article-content">
+        <h4>文章内容:</h4>
+        <p v-html="article.content"></p>
+      </div>
+      <div class="article-actions">
+        <button @click="viewArticleDialog = false" class="button-cancel" variant="outlined">返回</button>
+      </div>
+    </div>
   </v-dialog>
 </template>
 
 <script setup>
-  import { ref, onMounted } from 'vue';
-  import axiosInstance from "@/utils/request";
+import BreadcrumbBar from '@/components/BreadcrumbBar.vue';
+import MessageSnakeBar from '@/components/MessageSnakeBar.vue';
+import ArticleSection from '@/components/ArticleList.vue';
+import { ref, onMounted, reactive } from 'vue';
+import axiosInstance from "@/utils/axiosHandler";
 
-  const items = ref([
-    { src: 'https://cdn.vuetifyjs.com/images/carousel/squirrel.jpg'},
-    { src: 'https://cdn.vuetifyjs.com/images/carousel/sky.jpg'},
-    { src: 'https://cdn.vuetifyjs.com/images/carousel/bird.jpg'},
-    { src: 'https://cdn.vuetifyjs.com/images/carousel/planet.jpg'},
-    { src: 'https://cdn.vuetifyjs.com/images/carousel/hulk.jpg'},
-  ]);
+const tags = reactive([]);
+const keyWordArticles = reactive([]);
+const latestArticles = reactive([]);
+const popularArticles = reactive([]);
+const article = reactive({
+  title: '',
+  content: '',
+  image: null,
+  authorName: '',
+  authorEmail: ''
+});
 
-  const articles = ref([]);
-  const tags = ref([]);
-  const keyWordArticles = ref([]);
+const breadcrumbs = ref([{ text: '首頁', disabled: false, href: '/' }]);
+const displaySection = ref('latest');
+const keyWord = ref('');
+const snackbar = reactive({
+  visible: false,
+  color: '',
+  message: ''
+});
+const loading = ref(false);
+const viewArticleDialog = ref(false);
 
-  const viewArticleDialog = ref(false);
+onMounted(() => {
+  getLatestArticles();
+  getPopularArticles();
+  getHotTags();
+});
 
-  const snackbar = ref(false);
-  const snackbarColor = ref('');
-  const receiveMessage = ref('');
-  const loading = ref(false);
-  const displaySection = ref('latestArticles');
-
-  const search = ref('');
-
-  const breadcrumbs = ref([
-    { text: '首頁', disabled: false, href: '/' }
-  ]);
-  const latestArticles = ref([
-  ]);
-  const popularArticles = ref([
-  ]);
-  const article = ref({
-    title: '',
-    content: '',
-    image: null,
-    authorName: '',
-    authorEmail: ''
-  });
-  onMounted(async () => {
-    await getLatestArticles()
-    await getPopularArticles()
-    await getHotTags()
-  })
-
-  async function getHotTags() {
-    await axiosInstance.get('/tags/findHotTag').then((response) => {
-      const apiResponse = response.data
-      if(apiResponse.result) {
-        tags.value = apiResponse.data
-      }else {
-        snackbarColor.value = 'error'
-        receiveMessage.value = apiResponse.message
-        snackbar.value = true
-      }
-    }).catch((error) => {
-      console.log(error)
-    })
-  }
-
-  async function getArticlesByTagId(tagId) {
-    loading.value = true
-    await axiosInstance.get('/posts/searchByTag/' + Number(tagId)).then((response) => {
-      const apiResponse = response.data
-      if(apiResponse.result) {
-        keyWordArticles.value = apiResponse.data
-        loading.value = false
-      } else {
-        loading.value = false
-        snackbarColor.value = 'error'
-        receiveMessage.value = apiResponse.message
-        snackbar.value = true
-      }
-    }).catch(() => {
-      loading.value = false
-    })
-  }
-
-  async function getArticles() {
-    loading.value = true
-    await axiosInstance.get('/posts', {params: {page: page.value}}).then((response) => {
-      const apiResponse = response.data
-       if(apiResponse.result) {
-         loading.value = false
-         articles.value = apiResponse.data
-       } else {
-         loading.value = false
-         snackbarColor.value = 'error'
-         receiveMessage.value = apiResponse.message
-         snackbar.value = true
+async function getHotTags() {
+  try {
+    const response = await axiosInstance.get('/tags/findHotTag');
+    if (response.data.result) {
+      tags.splice(0, tags.length, ...response.data.data);
+    } else {
+      showSnackbar(response.data.message, 'error');
     }
-  }).catch(() => {
-      loading.value = false
-    })
+  } catch (error) {
+    console.log(error.message);
   }
+}
 
-  async function searchArticles() {
-    loading.value = true
-    await axiosInstance.get('/posts/searchByKeyword', {params:
-          {keyword: search.value}}
-    ).then((response) => {
-      const apiResponse = response.data
-      if(apiResponse.result) {
-        loading.value = false
-        snackbarColor.value = 'success'
-        keyWordArticles.value = apiResponse.data
-      } else {
-        loading.value = false
-        snackbarColor.value = 'error'
-        receiveMessage.value = apiResponse.message
-        snackbar.value = true
-      }
-    }).catch(() => {
-      loading.value = false
-    })
+async function getArticlesByTagId(tagId) {
+  loading.value = true;
+  try {
+    const response = await axiosInstance.get(`/posts/searchByTag/${tagId}`);
+    if (response.data.result) {
+      keyWordArticles.splice(0, keyWordArticles.length, ...response.data.data);
+    } else {
+      showSnackbar(response.data.message, 'error');
+    }
+  } catch (error) {
+    showSnackbar(error.message, 'error');
+  } finally {
+    loading.value = false;
   }
+}
 
-  async function getLatestArticles() {
-    loading.value = true
-    await axiosInstance.get('/posts/latest').then((response) => {
-      const apiResponse = response.data
-       if(apiResponse.result) {
-         loading.value = false
-         snackbarColor.value = 'success'
-         latestArticles.value = apiResponse.data
-       } else {
-         loading.value = false
-         snackbarColor.value = 'error'
-         receiveMessage.value = apiResponse.message
-         snackbar.value = true
-       }
-    }).catch((error) => {
-      loading.value = false
-      snackbarColor.value = 'error'
-      receiveMessage.value = error.response.data.message
-      snackbar.value = true
-    })
+async function searchArticles() {
+  loading.value = true;
+  try {
+    const response = await axiosInstance.get('/posts/searchByKeyword', {
+      params: { keyword: keyWord.value }
+    });
+    if (response.data.result) {
+      keyWordArticles.splice(0, keyWordArticles.length, ...response.data.data);
+    } else {
+      showSnackbar(response.data.message, 'error');
+    }
+  } catch (error) {
+    showSnackbar(error.message, 'error');
+  } finally {
+    loading.value = false;
   }
+}
 
-  async function getPopularArticles() {
-    loading.value = true
-    await axiosInstance.get('/posts/popular').then((response) => {
-      const apiResponse = response.data
-       if(apiResponse.result) {
-         loading.value = false
-         popularArticles.value = apiResponse.data
-       } else {
-         loading.value = false
-         snackbarColor.value = 'error'
-         receiveMessage.value = apiResponse.message
-         snackbar.value = true
-       }
-    }).catch(() => {
-      loading.value = false
-    })
+async function getLatestArticles() {
+  await fetchArticles('/posts/latest', latestArticles);
+}
+
+async function getPopularArticles() {
+  await fetchArticles('/posts/popular', popularArticles);
+}
+
+async function fetchArticles(url, articlesArray) {
+  loading.value = true;
+  try {
+    const response = await axiosInstance.get(url);
+    if (response.data.result) {
+      articlesArray.splice(0, articlesArray.length, ...response.data.data);
+    } else {
+      showSnackbar(response.data.message, 'error');
+    }
+  } catch (error) {
+    showSnackbar(error.message, 'error');
+  } finally {
+    loading.value = false;
   }
+}
 
-  async function viewArticle(id) {
-    loading.value = true
-    await axiosInstance.get('/posts/' + id).then((response) => {
-       const apiResponse = response.data
-       if(apiResponse.result) {
-         loading.value = false
-         article.value = apiResponse.data
-         viewArticleDialog.value = true
-       } else {
-         loading.value = false
-         snackbarColor.value = 'error'
-         receiveMessage.value = apiResponse.message
-         snackbar.value = true
-       }
-    }).catch(() => {
-      loading.value = false
-    })
+async function viewArticle(id) {
+  loading.value = true;
+  try {
+    const response = await axiosInstance.get(`/posts/${id}`);
+    if (response.data.result) {
+      Object.assign(article, response.data.data);
+      viewArticleDialog.value = true;
+    } else {
+      showSnackbar(response.data.message, 'error');
+    }
+  } catch (error) {
+    showSnackbar(error.message, 'error');
+  } finally {
+    loading.value = false;
   }
+}
 
+function showSnackbar(message, color) {
+  snackbar.color = color;
+  snackbar.message = message;
+  snackbar.visible = true;
+}
 </script>
 
 <style scoped lang="sass">
 .v-btn
-  transition: background-color 0.3s ease
-.v-btn:hover
-  background-color: var(--v-primary-base)
+  color: rgba(var(--v-theme-on-background), var(--v-disabled-opacity))
+  text-decoration: none
+  transition: .2s ease-in-out
 
-.elevation-2
-  margin-top: 20px
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2)
-.elevation-5
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3)
-.font-weight-bold
+  &:hover
+    color: var(--v-primary-base)
+
+.article-container
+  max-width: 800px
+  margin: 0 auto
+  padding: 20px
+  background-color: #fff
+  border-radius: 10px
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1)
+
+.article-header
+  margin-bottom: 20px
+
+.article-title
+  font-size: 2em
   font-weight: bold
+  margin-bottom: 10px
 
+.article-author,
+.article-email
+  font-size: 1.2em
+  margin-bottom: 5px
+
+.article-content
+  max-height: 600px
+  overflow-y: auto
+  padding-right: 10px
+  margin-bottom: 20px
+
+.article-content h4
+  font-size: 1.5em
+  font-weight: bold
+  margin-bottom: 10px
+
+.article-content p
+  line-height: 1.6
+
+.article-actions
+  text-align: right
+
+.button-cancel
+  background-color: #ff5252
+  color: #fff
+  border: none
+  padding: 10px 20px
+  border-radius: 5px
+  cursor: pointer
+  transition: all 0.3s ease-in-out
+
+  &:hover
+    background-color: #e53935
 </style>
-

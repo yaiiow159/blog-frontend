@@ -11,7 +11,6 @@
 <template>
   <v-bottom-navigation
     v-model="value"
-    color="teal"
     grow
   >
     <v-btn class="social-link" @click="goTo('https://github.com')">

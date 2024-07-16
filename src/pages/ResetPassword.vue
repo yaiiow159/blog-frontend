@@ -1,100 +1,82 @@
 <template>
   <v-container>
-    <v-form ref="resetForm" lazy-validation>
+    <!-- 訊息顯示  -->
+    <MessageSnakeBar :message="receiveMessage" :color="snackbarColor" v-if="snackbar"></MessageSnakeBar>
+
+    <v-form ref="resetForm" v-model="resetFormValid" validate-on="lazy blur" @submit.prevent="resetPassword">
       <v-text-field
-        v-model="resetForm.password"
-        :rules="passwordRules"
+        v-model.trim="resetForm.newPassword"
+        :rules="[commonRules.required, commonRules.passwordRule]"
         label="新密碼"
         type="password"
         required
       ></v-text-field>
-
-      <v-text-field
-        v-model="resetForm.confirmPassword"
-        :rules="confirmPasswordRules"
-        label="確認密碼"
-        type="password"
-        required
-      ></v-text-field>
-
-      <v-text-field
-        v-model="resetForm.verificationCode"
-        :rules="verificationCodeRules"
-        label="驗證碼"
-        required
-      ></v-text-field>
-
       <v-btn
-        :disabled="!valid"
-        color="success"
-        @click="resetPassword"
+        :disabled="!resetFormValid"
+        block
+        type="submit"
       >
         重設密碼
       </v-btn>
     </v-form>
   </v-container>
-
-  <v-snackbar v-model="snackbar" :timeout="2000" :color="snackbarColor" top absolute >
-    {{ receiveMessage }}
-  </v-snackbar>
-
   <v-overlay :opacity="0.8" :model-value="loading" z-index="999" absolute></v-overlay>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
-import axiosInstance from "@/utils/request";
-import {createRouter as $router} from "vue-router";
+import { ref } from 'vue';
+import axiosInstance from "@/utils/axiosHandler";
+import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from "@/stores/user";
+import { commonRules } from '@/utils/rules';
+import MessageSnakeBar from "@/components/MessageSnakeBar.vue";
 
 const userStore = useUserStore();
+const route = useRoute();
+const router = useRouter();
+
 const snackbar = ref(false);
 const snackbarColor = ref('success');
 const receiveMessage = ref('');
 const loading = ref(false);
-const valid = ref(true);
+
+const resetFormValid = ref(false);
+
 const resetForm = ref({
-  password: '',
-  confirmPassword: '',
-  verificationCode: '',
+  newPassword: '',
 });
 
-const passwordRules = [
-  v => !!v || '新密碼是必填的',
-  v => (v && v.length >= 8) || '密碼必須至少8個字符',
-];
-const confirmPasswordRules = [
-  v => !!v || '確認密碼是必填的',
-  v => v === resetForm.password || '密碼和確認密碼不匹配',
-];
-const verificationCodeRules = [
-  v => !!v || '驗證碼是必填的',
-  v => (v && v.length === 4) || '驗證碼必須是4位數字',
-];
-
 async function resetPassword() {
-    await axiosInstance.post('/auth/resetPassword', {
-      password: resetForm.value.password,
-      confirmPassword: resetForm.value.confirmPassword,
-      verificationCode: resetForm.value.verificationCode
-    }).then((response) => {
-      if(response.data.result){
-        snackbarColor.value = 'success';
-        receiveMessage.value = response.data.message;
-        snackbar.value = true;
-        userStore.userInfo.password = resetForm.value.password
-        $router.push('/login');
-      } else {
-        snackbarColor.value = 'error';
-        receiveMessage.value = response.data.message;
-        snackbar.value = true;
-      }
-    }).catch(() => {
-    })
+  loading.value = true;
+  try {
+    const response = await axiosInstance.post('/auth/resetPassword', {
+      newPassword: resetForm.value.newPassword,
+      token: route.query.token
+    });
+
+    if (response.data.result) {
+      receiveMessage.value = response.data.message;
+      userStore.userInfo.password = resetForm.value.newPassword;
+      await router.push('/login').then(() => {
+        showSnackbar('success', response.data.message);
+      });
+    } else {
+      showSnackbar('error', response.data.message);
+    }
+  } catch (error) {
+    showSnackbar('error', '發送請求失敗，請聯絡管理員。');
+  } finally {
+    loading.value = false;
+  }
 }
+
+function showSnackbar(color, message) {
+  snackbarColor.value = color;
+  receiveMessage.value = message;
+  snackbar.value = true;
+}
+
 </script>
 
 <style scoped lang="sass">
-
-
 </style>

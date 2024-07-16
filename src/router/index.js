@@ -23,9 +23,7 @@ import RecentViewPage from "@/pages/RecentViewPage.vue";
 import NotFound from "@/pages/NotFound.vue";
 import PersonalArticles from '@/pages/PersonalArticles.vue';
 import FavoriteArticles from '@/pages/FavoriteArticles.vue';
-
-import NProgress from 'nprogress';
-import 'nprogress/nprogress.css';
+import PersonalResume from '@/pages/PersonalResume.vue';
 
 import Swal from "sweetalert2";
 import {useUserStore} from "@/stores/user";
@@ -46,7 +44,7 @@ const router = createRouter({
       component: LoginPage,
     },
     {
-      path: "/reset",
+      path: "/reset/:token",
       name: "Reset",
       component: ResetPassword,
     },
@@ -111,6 +109,11 @@ const router = createRouter({
       component: LoginRecordPage
     },
     {
+      path: "/about",
+      name: "PersonalResume",
+      component: PersonalResume
+    },
+    {
       path: "/404",
       name: "NotFound",
       component: NotFound
@@ -124,7 +127,8 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const token = sessionStorage.getItem('userInfo') ? JSON.parse(sessionStorage.getItem('userInfo')).token : null
+  const userStore = useUserStore();
+  const token = userStore.userInfo.token;
   // 驗證jwt token過期時間
   if (token) {
     const now = new Date();
@@ -150,11 +154,10 @@ router.beforeEach((to, from, next) => {
     next({name: 'Login', query: {redirect: to.fullPath}});
     return;
   }
-  NProgress.start();
   next();
 });
 
 router.afterEach(() => {
-  NProgress.done();
-});
+  window.scrollTo(0, 0);}
+);
 export default router

@@ -1,429 +1,376 @@
 <script setup>
-  import axiosInstance from "@/utils/request";
-  import { ref, onMounted } from 'vue';
+import axiosInstance from "@/utils/axiosHandler";
+import { ref, reactive, onMounted } from 'vue';
+import BreadcrumbBar from "@/components/BreadcrumbBar.vue";
+import MessageSnakeBar from "@/components/MessageSnakeBar.vue";
+import { commonRules } from "@/utils/rules";
+import Swal from "sweetalert2";
 
-  const breadcrumbs = ref([
-    { text: '首頁', disabled: false, href: '/home' },
-    { text: '標籤管理', disabled: true, href: '/tags' },
-  ])
-  const name = ref('')
-  const loading = ref(false)
-  const dialogLoading = ref(false)
-  const snackbar = ref(false)
-  const snackbarColor = ref('')
-  const receiveMessage = ref('')
+const breadcrumbs = ref([
+  { text: '首頁', disabled: false, href: '/home' },
+  { text: '標籤管理', disabled: true, href: '/tags' },
+]);
 
-  const searchFieldName = ref('')
+const loading = ref(false);
+const dialogLoading = ref(false);
+const snackbar = reactive({
+  visible: false,
+  color: '',
+  message: ''
+});
 
-  const pageable = ref({
-    totalElements: Number(0),
-    totalPages: Number(0),
-    pageNumber: Number(1),
-    pageSize: Number(10)
-  })
+const searchFieldName = ref('');
 
-  const headers = [
-    { title: '序號', key: 'id', sortable: true},
-    { title: '名稱', key: 'name', sortable: true },
-    { title: '分類', key: 'categoryName', sortable: true },
-    { title: '描述', key: 'description', sortable: false },
-    { title: '發布時間', key: 'createDate',sortable: true },
-    { title: '更新時間', key: 'updDate',sortable: true },
-    { title: '操作', key: 'actions',sortable: false },
-  ]
-  const tag = ref({
-    id: Number(''),
+const pageable = reactive({
+  totalElements: 0,
+  totalPages: 0,
+  pageNumber: 1,
+  pageSize: 10,
+});
+
+const headers = [
+  { title: '序號', key: 'id', sortable: true },
+  { title: '名稱', key: 'name', sortable: true },
+  { title: '分類', key: 'categoryName', sortable: true },
+  { title: '描述', key: 'description', sortable: false },
+  { title: '發布時間', key: 'createDate', sortable: true },
+  { title: '更新時間', key: 'updDate', sortable: true },
+  { title: '操作', key: 'actions', sortable: false },
+];
+
+const tag = reactive({
+  id: null,
+  name: '',
+  description: '',
+  categoryId: null,
+  categoryName: '',
+});
+
+const tags = reactive([]);
+const categories = reactive([]);
+
+const dialogAddTag = ref(false);
+const dialogEditTag = ref(false);
+
+onMounted(async () => {
+  await getTags();
+  await getCategories();
+});
+
+async function getCategories() {
+  loading.value = true;
+  try {
+    const response = await axiosInstance.get('/categories/findList');
+    const apiResponse = response.data;
+    if (apiResponse.result) {
+      categories.value = apiResponse.data;
+    } else {
+      showSnackbar('error', apiResponse.message);
+    }
+  } catch {
+    showSnackbar('error', '請求時發生錯誤，請稍後再試。');
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function getTags() {
+  loading.value = true;
+  try {
+    const response = await axiosInstance.get('/tags', {
+      params: {
+        name: searchFieldName.value,
+        page: pageable.pageNumber,
+        pageSize: pageable.pageSize,
+      },
+    });
+    const apiResponse = response.data;
+    if (apiResponse.result) {
+      tags.splice(0, tags.length, ...apiResponse.data.content);
+      handlePageChange(apiResponse);
+    } else {
+      showSnackbar('error', apiResponse.message);
+    }
+  } catch {
+    showSnackbar('error', '請求時發生錯誤，請稍後再試。');
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function getTag(id) {
+  dialogLoading.value = true;
+  try {
+    const response = await axiosInstance.get(`/tags/${id}`);
+    const apiResponse = response.data;
+    if (apiResponse.result) {
+      Object.assign(tag, apiResponse.data);
+      tag.categoryId = apiResponse.data.category.id;
+    } else {
+      showSnackbar('error', apiResponse.message);
+    }
+  } catch {
+    showSnackbar('error', '請求時發生錯誤，請稍後再試。');
+  } finally {
+    dialogLoading.value = false;
+  }
+}
+
+function handleAddTag() {
+  resetTag();
+  dialogAddTag.value = true;
+}
+
+function handleEditTag(id) {
+  resetTag();
+  getTag(id);
+  dialogEditTag.value = true;
+}
+
+function resetTag() {
+  Object.assign(tag, {
+    id: null,
     name: '',
     description: '',
-    categoryId: Number(''),
+    categoryId: null,
     categoryName: '',
-  })
-  const tags = ref([])
-  const categories = ref([])
-  const dialogAddTag = ref(false)
-  const dialogEditTag = ref(false)
+  });
+}
 
-  onMounted(async () => {
-    await getTags()
-    await getCategories()
-  })
+function formateCategoryName(category) {
+  return category ? category.name : '';
+}
 
-  async function getCategories() {
-    loading.value = true
-    await axiosInstance.get('/categories/findList').then((response) => {
+function handlePageChange(apiResponse) {
+  pageable.totalElements = apiResponse.data.totalElements;
+  pageable.totalPages = apiResponse.data.totalPages;
+  pageable.pageNumber = apiResponse.data.number + 1;
+  pageable.pageSize = apiResponse.data.size;
+}
+
+async function addTag() {
+  dialogLoading.value = true;
+  try {
+    const response = await axiosInstance.post('/tags', {
+      name: tag.name,
+      description: tag.description,
+      categoryId: tag.categoryId,
+    });
     const apiResponse = response.data;
-    if(apiResponse.result) {
-      categories.value = apiResponse.data
-      loading.value = false
+    if (apiResponse.result) {
+      showSnackbar('success', apiResponse.message);
+      dialogAddTag.value = false;
+      await getTags();
     } else {
-      loading.value = false
-      snackbarColor.value = 'error'
-      receiveMessage.value = apiResponse.message
-      snackbar.value = true
+      showSnackbar('error', apiResponse.message);
     }
-  }).catch(() => {
-    loading.value = false
-  }).finally(() => {
-    })
+  } catch {
+    showSnackbar('error', '請求時發生錯誤,請稍後再試。');
+  } finally {
+    dialogLoading.value = false;
   }
-  async function getTags() {
-    loading.value = true
-    await axiosInstance.get('/tags', {params:
-        {
-          name: searchFieldName.value,
-          page: pageable.value.pageNumber,
-          pageSize: pageable.value.pageSize
-        }
-  }).then((response) => {
+}
+
+async function editTag() {
+  dialogLoading.value = true;
+  try {
+    const response = await axiosInstance.put('/tags', {
+      id: tag.id,
+      name: tag.name,
+      description: tag.description,
+      categoryId: tag.categoryId,
+    });
     const apiResponse = response.data;
-    if(apiResponse.result) {
-      tags.value = apiResponse.data.content
-      pageable.value.totalElements = apiResponse.data.totalElements
-      pageable.value.totalPages = apiResponse.data.totalPages
-      pageable.value.pageNumber = apiResponse.data.number + 1
-      pageable.value.pageSize = apiResponse.data.size
-      loading.value = false
+    if (apiResponse.result) {
+      showSnackbar('success', apiResponse.message);
+      dialogEditTag.value = false;
+      await getTags();
     } else {
-      loading.value = false
-      snackbarColor.value = 'error'
-      receiveMessage.value = apiResponse.message
-      snackbar.value = true
+      showSnackbar('error', apiResponse.message);
     }
-  }).catch(() => {
-    loading.value = false
-  }).finally(() => {
-    })
+  } catch {
+    showSnackbar('error', '請求時發生錯誤,請稍後再試。');
+  } finally {
+    dialogLoading.value = false;
   }
+}
 
-  async function getTag(id) {
-    loading.value = true
-    await axiosInstance.get('/tags/' + Number(id)).then((response) => {
-      const apiResponse = response.data;
-      if(apiResponse.result) {
-        tag.value = apiResponse.data
-        tag.value.categoryId = apiResponse.data.category.id
-        loading.value = false
-        console.log(tag.value)
-      } else {
-        loading.value = false
-        snackbarColor.value = 'error'
-        receiveMessage.value = apiResponse.message
-        snackbar.value = true
-      }
-    }).catch(() => {
-      loading.value = false
-    }).finally(() => {
-      loading.value = false
-    })
-  }
-
-  function handleAddTag() {
-    resetTag()
-    dialogAddTag.value = true
-  }
-
-  function handleEditTag(id) {
-    resetTag()
-    getTag(id)
-    dialogEditTag.value = true
-  }
-
-  function resetTag() {
-    tag.value = {
-      id: Number(''),
-      name: '',
-      description: ''
+async function deleteTag(id) {
+  dialogLoading.value = true;
+  try {
+    const result = await Swal.fire({
+      title: '確定要刪除嗎?',
+      text: '刪除後將無法復原',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: '確定',
+      cancelButtonText: '取消',
+    });
+    if(!result.isConfirmed) return;
+    const response = await axiosInstance.delete(`/tags/${id}`);
+    const apiResponse = response.data;
+    if (apiResponse.result) {
+      showSnackbar('success', apiResponse.message);
+      await getTags();
+    } else {
+      showSnackbar('error', apiResponse.message);
     }
+  } catch {
+    showSnackbar('error', '請求時發生錯誤,請稍後再試。');
+  } finally {
+    dialogLoading.value = false;
   }
+}
 
-  function formateCategoryName(category) {
-    if(category) {
-      return category.name
-    }
-  }
-
-  async function addTag() {
-    await axiosInstance.post('/tags', {
-      name: tag.value.name,
-      description: tag.value.description,
-      categoryId: tag.value.categoryId
-    }).then((response) => {
-      loading.value = true
-      const apiResponse = response.data
-      if(apiResponse.result) {
-        snackbarColor.value = 'success'
-        receiveMessage.value = apiResponse.message
-        snackbar.value = true
-        loading.value = false
-        dialogAddTag.value = false
-      } else {
-        loading.value = false
-        snackbarColor.value = 'error'
-        receiveMessage.value = apiResponse.message
-        snackbar.value = true
-      }
-    }).catch(() => {
-      loading.value = false
-    }).finally(() => {
-      getTags()
-    })
-  }
-
-  async function editTag() {
-    await axiosInstance.put('/tags', {
-      id: tag.value.id,
-      name: tag.value.name,
-      description: tag.value.description,
-      categoryId: tag.value.categoryId
-    }).then((response) => {
-      loading.value = true
-      const apiResponse = response.data
-      if(apiResponse.result) {
-        dialogEditTag.value = false
-        snackbarColor.value = 'success'
-        receiveMessage.value = apiResponse.message
-        snackbar.value = true
-        loading.value = false
-      } else {
-        loading.value = false
-        snackbarColor.value = 'error'
-        receiveMessage.value = apiResponse.message
-        snackbar.value = true
-      }
-    }).catch(() => {
-      loading.value = false
-    }).finally(() => {
-      dialogEditTag.value = false
-      getTags()
-    })
-  }
-
-  async function deleteCategory(id) {
-    await axiosInstance.delete('/tags/' + Number(id)).then((response) => {
-      loading.value = true
-      const apiResponse = response.data
-      if(apiResponse.result) {
-        dialogEditTag.value = false
-        snackbarColor.value = 'success'
-        receiveMessage.value = apiResponse.message
-        snackbar.value = true
-        loading.value = false
-      } else {
-        loading.value = false
-        snackbarColor.value = 'error'
-        receiveMessage.value = apiResponse.message
-        snackbar.value = true
-      }
-    }).catch(() => {
-      loading.value = false
-    }).finally(() => {
-      getTags()
-    })
-  }
+function showSnackbar(color, message) {
+  snackbar.color = color;
+  snackbar.message = message;
+  snackbar.visible = true;
+}
 </script>
 
 <template>
-    <v-breadcrumbs bg-color="breadcrumb" active-color="primary" rounded :items="breadcrumbs" divider=">" >
-      <template v-slot:prepend>
-        <v-icon icon="mdi-home" size="small"></v-icon>
+  <!-- 導覽列 -->
+  <BreadcrumbBar :items="breadcrumbs" />
+  <!-- 消息顯示列-->
+  <MessageSnakeBar :message="snackbar.message" :color="snackbar.color" v-if="snackbar.visible" />
+
+  <v-card flat>
+    <v-card-title class="d-flex align-center pe-2">
+      <v-text-field
+        v-model="searchFieldName"
+        density="compact"
+        label="名稱"
+        prepend-inner-icon="mdi-magnify"
+        variant="solo-filled"
+        flat
+        hide-details
+        single-line
+      />
+      <v-divider class="mx-2" inset vertical />
+      <v-btn class="mr-2 button-query" size="large" density="compact" @click="getTags">
+        查詢
+      </v-btn>
+      <v-btn class="ml-2 button-add" size="large" density="compact" @click="handleAddTag">
+        新增
+      </v-btn>
+    </v-card-title>
+    <v-data-table :headers="headers"
+                  multi-sort
+                  :sort-by="[{ key: 'name', order: 'asc'}, { key: 'id', order: 'asc'}]"
+                  :loading="loading"
+                  loading-text="載入資料中..."
+                  :items="tags"
+                  :items-per-page="pageable.pageSize"
+                  height="calc(100vh - 300px)">
+      <template v-slot:top>
+        <v-toolbar flat>
+          <v-toolbar-title>標籤列表</v-toolbar-title>
+        </v-toolbar>
       </template>
-      <template v-slot:item="{ item }">
-        <v-breadcrumbs-item :title="item.text" :href="item.href" :disabled="item.disabled">
-        </v-breadcrumbs-item>
+      <template v-slot:item.categoryName="{ item }">
+        {{ formateCategoryName(item.category) }}
       </template>
-    </v-breadcrumbs>
-    <v-card flat>
-      <v-card-title class="d-flex align-center pe-2">
-        <v-icon icon="mdi-tag"></v-icon> &nbsp;
-        標籤管理頁面
-        <v-spacer></v-spacer>
-        <v-text-field
-            v-model="searchFieldName"
+      <template v-slot:item.actions="{ item }">
+        <v-btn class="me-2 mb-2 outlined" density="compact" color="edit" @click="handleEditTag(item.id)">編輯</v-btn>
+        <v-btn class="me-2 mb-2 outlined" density="compact" color="delete" @click="deleteTag(item.id)">刪除</v-btn>
+      </template>
+      <template v-slot:bottom>
+        <div class="text-center pt-2">
+          <v-pagination
+            v-model="pageable.pageNumber"
+            :length="pageable.totalPages"
+            total-visible="5"
+            @update:modelValue="getTags"
+            rounded="circle"
             density="compact"
-            label="名稱"
-            prepend-inner-icon="mdi-magnify"
-            variant="solo-filled"
-            flat
-            hide-details
-            single-line
-        ></v-text-field>
-        <v-divider class="mx-2" inset vertical></v-divider>
-        <v-btn :bordered="false" color="search" class="mr-2 outlined" size="large" density="compact" @click="getTags">查詢</v-btn>
-        <v-btn :bordered="false" color="add" class="ml-2 outlined" size="large" density="compact" @click="handleAddTag">新增</v-btn>
+          ></v-pagination>
+        </div>
+      </template>
+    </v-data-table>
+  </v-card>
+
+  <v-dialog v-model="dialogAddTag" persistent max-width="600px" transition="dialog-bottom-transition" width="auto">
+    <v-card flat :loading="dialogLoading" loading-text="加載中...">
+      <v-card-title>
+        <span class="text-h5">新增標籤</span>
       </v-card-title>
-      <v-data-table :headers="headers"
-                    multi-sort
-                    :sort-by="[{ key: 'name', order: 'asc'},{ key: 'id', order: 'asc'}]"
-                    :loading="loading"
-                    loading-text="載入資料中..."
-                    :items="tags"
-                    :items-per-page="pageable.pageSize"
-                    height="calc(100vh - 300px)">
-        <template v-slot:top>
-          <v-toolbar flat>
-            <v-toolbar-title>標籤列表</v-toolbar-title>
-          </v-toolbar>
-        </template>
-        <template v-slot:item.categoryName="{ item }">
-          {{ formateCategoryName(item.category) }}
-        </template>
-        <template v-slot:item.actions="{ item }">
-            <v-btn :bordered="false" class="me-2 mb-2 outlined" density="compact" color="edit" @click="handleEditTag(item.id)">編輯</v-btn>
-            <v-btn :bordered="false" class="me-2 mb-2 outlined" density="compact" color="delete" @click="deleteCategory(item.id)">刪除</v-btn>
-        </template>
-        <template v-slot:bottom>
-          <div class="text-center pt-2">
-            <v-pagination
-                v-model="pageable.pageNumber"
-                :length="pageable.totalPages"
-                total-visible="5"
-                @update:modelValue="getTags"
-                rounded="circle"
-                density="compact"
-            ></v-pagination>
-          </div>
-        </template>
-      </v-data-table>
+      <v-card-text>
+        <v-container>
+          <v-row>
+            <v-col cols="12">
+              <v-text-field v-model="tag.name" label="名稱" :rules="[commonRules.required]" required />
+            </v-col>
+            <v-col cols="12">
+              <v-text-field v-model="tag.description" label="描述" />
+            </v-col>
+            <v-col cols="12">
+              <v-select
+                v-model="tag.categoryId"
+                :items="categories"
+                :item-title="item => item.name"
+                :item-value="item => item.id"
+                label="所屬分類"
+                :rules="[commonRules.required]"
+                required
+              />
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn color="add" variant="text" @click="addTag">新增</v-btn>
+        <v-btn class="button-add me-2 mb-2" variant="outlined" @click="dialogAddTag = false">取消</v-btn>
+      </v-card-actions>
     </v-card>
+  </v-dialog>
 
-    <v-dialog v-model="dialogAddTag" persistent max-width="600px">
-      <v-card class="rounded-xl pa-5">
-        <v-card-title>
-          <span class="text-h5">新增標籤</span>
-        </v-card-title>
-        <v-card-text>
-          <v-container>
-            <v-row>
-              <v-col
-                  cols="12"
-                  sm="6"
-                  md="4"
-              >
-                名稱:
-                <v-text-field
-                    v-model="tag.name"
-                    label="名稱"
-                    required
-                ></v-text-field>
-              </v-col>
-              <v-col
-                  cols="12"
-                  sm="6"
-                  md="4">
-                描述:
-                <v-text-field
-                    v-model="tag.description"
-                    label="描述"
-                ></v-text-field>
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col cols="12">
-                <v-select
-                    v-model="tag.categoryId"
-                    :items="categories"
-                    :item-title="item => item.name"
-                    :item-value="item => item.id"
-                    label="所屬分類"
-                    required
-                ></v-select>
-              </v-col>
-            </v-row>
-          </v-container>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn
-              color="add"
-              variant="text"
-              @click="addTag()"
-          >
-            新增
-          </v-btn>
-          <v-btn
-              color="cancel"
-              variant="text"
-              @click="dialogAddTag = false"
-          >
-            取消
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <v-dialog v-model="dialogEditTag" persistent max-width="600px">
-      <v-card class="rounded-xl pa-5" :loading="dialogLoading" loading-text="加載中...">
-        <v-card-title>
-          <span class="text-h5">編輯標籤</span>
-        </v-card-title>
-        <v-card-text>
-          <v-container>
-            <v-row>
-              <v-col
-                  cols="12"
-                  sm="6"
-                  md="4"
-              >
-                名稱:
-                <v-text-field
-                    :name="tag.name"
-                    v-model="tag.name"
-                    label="名稱"
-                    required
-                ></v-text-field>
-              </v-col>
-              <v-col
-                  cols="12">
-                描述:
-                <v-text-field
-                    :name="tag.description"
-                    v-model="tag.description"
-                    label="描述"
-                ></v-text-field>
-              </v-col>
-            </v-row>
-            <row>
-              <v-col cols="12">
-                <v-select
-                    :item-title="item => item.name"
-                    :item-value="item => item.id"
-                    v-model="tag.categoryId"
-                    :items="categories"
-                    label="所屬分類"
-                    required
-                ></v-select>
-              </v-col>
-            </row>
-          </v-container>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn
-              color="edit"
-              variant="text"
-              @click="editTag()"
-          >
-            編輯
-          </v-btn>
-          <v-btn
-              color="cancel"
-              variant="text"
-              @click="dialogEditTag = false"
-          >
-            取消
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <v-snackbar v-model="snackbar" :absolute="true" :top="true" :color="snackbarColor" timeout="1000">
-      {{ receiveMessage }}
-    </v-snackbar>
+  <v-dialog v-model="dialogEditTag" persistent max-width="600px" transition="dialog-bottom-transition" width="auto">
+    <v-card flat :loading="dialogLoading" loading-text="加載中...">
+      <v-card-title>
+        <span class="text-h5">編輯標籤</span>
+      </v-card-title>
+      <v-card-text>
+        <v-container>
+          <v-row>
+            <v-col cols="12">
+              <v-text-field v-model="tag.name" label="名稱" :rules="[commonRules.required]" required />
+            </v-col>
+            <v-col cols="12">
+              <v-text-field v-model="tag.description" label="描述" />
+            </v-col>
+            <v-col cols="12">
+              <v-select
+                v-model="tag.categoryId"
+                :items="categories"
+                :item-title="item => item.name"
+                :item-value="item => item.id"
+                label="所屬分類"
+                :rules="[commonRules.required]"
+                required
+              />
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn class="button-edit"  variant="text" @click="editTag">編輯</v-btn>
+        <v-btn class="button-cancel" variant="text" @click="dialogEditTag = false">取消</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <style scoped lang="sass">
 .v-btn
-  transition: background-color 0.3s ease
-.v-btn:hover
-  background-color: var(--v-primary-base)
+  color: rgba(var(--v-theme-on-background), var(--v-disabled-opacity))
+  text-decoration: none
+  transition: .2s ease-in-out
+
+  &:hover
+    color: var(--v-primary-base)
 </style>

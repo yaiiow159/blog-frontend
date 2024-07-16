@@ -1,268 +1,219 @@
 <script setup>
-import axiosInstance from "@/utils/request";
-import { ref, onMounted } from 'vue';
-import {useUserStore} from "@/stores/user";
-
+import axiosInstance from "@/utils/axiosHandler";
+import { ref, onMounted , reactive} from 'vue';
+import { useUserStore } from "@/stores/user";
+import BreadcrumbBar from "@/components/BreadcrumbBar.vue";
+import MessageSnakeBar from "@/components/MessageSnakeBar.vue";
 
 const breadcrumbs = ref([
   { text: '首頁', disabled: false, href: '/home' },
   { text: '瀏覽紀錄', disabled: true, href: '/recentViews' },
-])
-const userStore = useUserStore()
-const loading = ref(false)
-const snackbar = ref(false)
-const snackbarColor = ref('')
-const receiveMessage = ref('')
+]);
 
-const userInfo = sessionStorage.getItem('userInfo');
-const user = JSON.parse(userInfo);
+const loading = ref(false);
+const snackbar = ref(false);
+const snackbarColor = ref('');
+const receiveMessage = ref('');
+const dialogViewRecentView = ref(false);
 
-const searchFieldTitle = ref('')
-const searchFieldAuthorName = ref('')
-const searchFieldAuthorEmail = ref('')
+const userStore = useUserStore();
+const user = userStore.userInfo;
 
-const pageable = ref({
-  totalElements: Number(0),
-  totalPages: Number(0),
-  pageNumber: Number(1),
-  pageSize: Number(10)
-})
+const searchField = ref({
+  title: '',
+  authorName: '',
+  authorEmail: ''
+});
 
-const notifications = ref([])
-const dialogViewRecentView = ref(false)
-const headers = [
-  { title: '序號', key: 'id', sortable: true},
-  { title: '標題', key: 'title', sortable: true},
-  { title: '作者名稱', key: 'authorName', sortable: false},
-  { title: '作者郵件', key: 'authorEmail', sortable: true},
-  { title: '內容', key: 'content', sortable: false},
-  { title: '發布時間', key: 'createTimeStr',sortable: true},
-  { title: '操作', key: 'actions',sortable: false},
-]
-const recentView = ref({
-  id: Number(''),
+const pageable = reactive({
+  totalElements: 0,
+  totalPages: 0,
+  pageNumber: 1,
+  pageSize: 10
+});
+
+const notifications = reactive([]);
+const recentView = reactive({
+  id: '',
   title: '',
   authorName: '',
   authorEmail: '',
   content: '',
   createTimeStr: ''
-})
-onMounted(async () => {
-  await getRecentViews()
-})
+});
+
+onMounted(getRecentViews);
+
 async function getRecentViews() {
-  loading.value = true
-  await axiosInstance.get('/recentViews', {params: {
-      email: searchFieldAuthorEmail.value,
-      authorName: searchFieldAuthorName.value,
-      title: searchFieldTitle.value,
-      username: user.username,
-      page: pageable.value.pageNumber,
-      pageSize: pageable.value.pageSize
-    }}).then((response) => {
+  loading.value = true;
+  try {
+    const response = await axiosInstance.get('/recentViews', {
+      params: {
+        ...searchField.value,
+        username: user.username,
+        page: pageable.value.pageNumber,
+        pageSize: pageable.value.pageSize
+      }
+    });
     const apiResponse = response.data;
     if (apiResponse.result) {
-      notifications.value = apiResponse.data.content
-      pageable.value.totalPages = apiResponse.data.totalPages
-      pageable.value.totalElements = apiResponse.data.totalElements
-      pageable.value.pageNumber = apiResponse.data.number + 1
-      pageable.value.pageSize = apiResponse.data.size
+      notifications.splice(0, notifications.length, ...apiResponse.data.content);
+      handlePageChange(apiResponse);
     } else {
-      snackbarColor.value = 'error';
-      receiveMessage.value = apiResponse.message;
-      snackbar.value = true;
+      showSnackbar('error', apiResponse.message);
     }
-  }).catch(() => {
-    loading.value = false
-  }).finally(() => {
-    loading.value = false
-  })
+  } catch (error) {
+    showSnackbar('error', '發送失敗,請稍後再試。');
+  } finally {
+    loading.value = false;
+  }
 }
 
 async function getRecentView(id) {
-  loading.value = true
-  await axiosInstance.get('/recentViews/' + Number(id)).then((response) => {
+  loading.value = true;
+  try {
+    const response = await axiosInstance.get(`/recentViews/${id}`);
     const apiResponse = response.data;
-    if(apiResponse.result) {
-      recentView.value = apiResponse.data
-      loading.value = false
+    if (apiResponse.result) {
+      // 將資料 放入recentView
+      Object.assign(recentView, apiResponse.data);
+      dialogViewRecentView.value = true;
+    } else {
+      showSnackbar('error', apiResponse.message);
     }
-  }).catch(() => {
-    loading.value = false
-  })
-}
-
-function viewRecentView(id) {
-  getRecentView(id)
-  dialogViewRecentView.value = true
-}
-
-function resetRecentView() {
-  recentView.value = {
-    id: Number(''),
-    title: '',
-    authorName: '',
-    authorEmail: '',
-    content: '',
-    createTimeStr: ''
+  } catch (error) {
+    showSnackbar('error', '發送失敗,請稍後再試。');
+  } finally {
+    loading.value = false;
   }
 }
+
+function showSnackbar(color, message) {
+  snackbarColor.value = color;
+  receiveMessage.value = message;
+  snackbar.value = true;
+}
+
+function handlePageChange(apiResponse) {
+  pageable.totalElements = apiResponse.data.totalElements;
+  pageable.totalPages = apiResponse.data.totalPages;
+  pageable.pageNumber = apiResponse.data.number + 1;
+  pageable.pageSize = apiResponse.data.size;
+}
+
 </script>
 
 <template>
-  <v-breadcrumbs bg-color="breadcrumb" active-color="primary" rounded :items="breadcrumbs" divider=">" >
-    <template v-slot:prepend>
-      <v-icon icon="mdi-home" size="small"></v-icon>
-    </template>
-    <template v-slot:item="{ item }">
-      <v-breadcrumbs-item :title="item.text" :href="item.href" :disabled="item.disabled">
-      </v-breadcrumbs-item>
-    </template>
-  </v-breadcrumbs>
+  <!-- 導覽列 -->
+  <BreadcrumbBar :items="breadcrumbs" />
+
+  <!-- 訊息顯示列 -->
+  <MessageSnakeBar :message="receiveMessage" :color="snackbarColor" />
+
   <v-card flat full-width>
-    <v-card-title class="d-flex align-center pe-2">
-      <v-icon icon="mdi-folder"></v-icon> &nbsp;
-      近期瀏覽頁面
-      <v-spacer></v-spacer>
-      <v-text-field
-          class="ml-2"
-          hide-details
-          v-model="searchFieldAuthorName"
+    <v-card-title class="d-flex align-center justify-space-between px-4 py-2">
+      <div class="d-flex align-center">
+        <v-text-field
+          v-model="searchField.authorName"
           density="compact"
           label="作者名稱"
           prepend-inner-icon="mdi-magnify"
-          variant="solo-filled"
-          flat
-          single-line
-      ></v-text-field>
-      <v-text-field
-          class="ml-2"
+          variant="outlined"
           hide-details
-          v-model="searchFieldAuthorEmail"
+          class="mr-2"
+        />
+
+        <v-text-field
+          v-model="searchField.authorEmail"
           density="compact"
           label="作者郵件"
           prepend-inner-icon="mdi-magnify"
-          variant="solo-filled"
-          flat
-          single-line
-      ></v-text-field>
-      <v-text-field
-          class="ml-2"
+          variant="outlined"
           hide-details
-          v-model="searchFieldTitle"
+          class="mr-2"
+        />
+
+        <v-text-field
+          v-model="searchField.title"
           density="compact"
           label="標題"
           prepend-inner-icon="mdi-magnify"
-          variant="solo-filled"
-          flat
-          single-line
-      ></v-text-field>
-      <v-divider class="mx-2" inset vertical></v-divider>
-      <v-btn :bordered="false" color="search" class="mr-2 outlined" size="large" density="compact" @click="getRecentViews">查詢</v-btn>
+          variant="outlined"
+          hide-details
+        />
+      </div>
+
+      <v-btn
+        class="button-query ml-2"
+        variant="tonal"
+        @click="getRecentViews"
+      >
+        查詢
+      </v-btn>
     </v-card-title>
-    <v-data-table multi-sort
-                  :sort-by="[{ key: 'name', order: 'asc'}, { key: 'id', order: 'asc'}]"
-                  :headers="headers"
-                  :loading="loading"
-                  loading-text="載入資料中..."
-                  :items="notifications"
-                  :items-per-page="pageable.pageSize"
-                  height="calc(100vh - 300px)">
-      <template v-slot:top>
-        <v-toolbar flat>
-          <v-toolbar-title>近期瀏覽列表</v-toolbar-title>
-        </v-toolbar>
+
+    <!-- 瀏覽紀錄列表 -->
+    <v-data-iterator :items="notifications" :items-per-page="pageable.pageSize" hide-default-footer>
+      <template v-slot:default="props">
+        <v-card v-for="item in props.items" :key="item.id" class="my-2">
+          <v-card-title>{{ item.title }}</v-card-title>
+          <v-card-subtitle>{{ item.authorName }} ({{ item.authorEmail }})</v-card-subtitle>
+          <v-card-text>{{ item.content.substring(0,100) }}</v-card-text>
+          <v-card-text>{{ item.createTimeStr }}</v-card-text>
+          <v-card-actions class="d-flex justify-end">
+            <v-btn bordered class="mr-2 outlined" size="large" density="compact" @click="getRecentView(item.id)">
+              瀏覽
+            </v-btn>
+          </v-card-actions>
+        </v-card>
       </template>
-      <template v-slot:item.actions="{ item }">
-        <v-btn  class="mr-2 outlined" density="compact" color="edit" @click="viewRecentView(item.id)">查看詳情</v-btn>
-      </template>
-      <template v-slot:bottom>
-        <div class="text-center pt-2">
-          <v-pagination
-              v-model="pageable.pageNumber"
-              :length="pageable.totalPages"
-              total-visible="5"
-              @update:modelValue="getRecentViews"
-              rounded="circle"
-              density="compact"
-          ></v-pagination>
-        </div>
-      </template>
-    </v-data-table>
+    </v-data-iterator>
   </v-card>
 
-  <v-dialog v-model="dialogViewRecentView" persistent max-width="600px">
-    <v-card class="rounded-xl pa-5">
-      <v-card-title>
-        <span class="text-h5">查看瀏覽紀錄</span>
+  <v-dialog v-model="dialogViewRecentView" persistent width="auto" transition="dialog-bottom-transition">
+    <v-card flat>
+      <v-card-title class="bg-primary text-white px-6 py-4">
+        <span class="text-h5 font-weight-bold">{{ recentView.title }}</span>
       </v-card-title>
-      <v-card-text>
-        <v-container>
-          <v-row>
-            <v-col
-                cols="12"
-            >
-              標題:
-              <v-text-field
-                  v-model="recentView.title"
-                  label="名稱"
-                  readonly
-              ></v-text-field>
-            </v-col>
-            <v-col
-                cols="12"
-            >
-              作者名稱:
-              <v-text-field
-                  v-model="recentView.authorName"
-                  label="作者名稱"
-                  readonly
-              ></v-text-field>
-            </v-col>
-            <v-col
-                cols="12"
-            >
-              作者郵箱:
-              <v-text-field
-                  v-model="recentView.authorEmail"
-                  label="作者名稱"
-                  readonly
-              ></v-text-field>
-            </v-col>
-            <v-col
-                cols="12"
-                >
-              內容:
-              <v-textarea
-                  v-model="recentView.content"
-                  label="內文"
-                  readonly
-              ></v-textarea>
-            </v-col>
-          </v-row>
-        </v-container>
+
+      <v-card-text class="px-6 py-4">
+        <div class="mb-4">
+          <div class="text-h6 font-weight-bold mb-2">作者資訊</div>
+          <div class="text-body-1">
+            <span class="font-weight-bold">作者名稱:</span> {{ recentView.authorName }}
+          </div>
+          <div class="text-body-1">
+            <span class="font-weight-bold">作者郵箱:</span> {{ recentView.authorEmail }}
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <div class="text-h6 font-weight-bold mb-2">文章內容</div>
+          <p class="text-body-1" v-html="recentView.content"></p>
+        </div>
+
+        <div>
+          <div class="text-h6 font-weight-bold mb-2">建立時間</div>
+          <div class="text-body-1">{{ recentView.createTimeStr }}</div>
+        </div>
       </v-card-text>
-      <v-card-actions>
+
+      <v-card-actions class="px-6 py-4">
         <v-spacer></v-spacer>
-        <v-btn
-            color="cancel"
-            variant="text"
-            @click="dialogViewRecentView = false"
-        >
+        <v-btn class="button-cancel" variant="tonal" @click="dialogViewRecentView = false">
           關閉
         </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
-
-  <v-snackbar v-model="snackbar" :absolute="true" :top="true" :color="snackbarColor" timeout="1000">
-    {{ receiveMessage }}
-  </v-snackbar>
 </template>
 
 <style scoped lang="sass">
 .v-btn
-  transition: background-color 0.3s ease
-.v-btn:hover
-  background-color: var(--v-primary-base)
+  color: rgba(var(--v-theme-on-background), var(--v-disabled-opacity))
+  text-decoration: none
+  transition: .2s ease-in-out
+
+  &:hover
+    color: var(--v-primary-base)
 </style>

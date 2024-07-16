@@ -11,6 +11,11 @@
 
 $font-primary: 'Roboto', sans-serif;
 $font-secondary: 'Open Sans', sans-serif;
+$color-primary: #2196F3;
+$color-secondary: #757575;
+$color-error: #EF5350;
+$color-success: #66BB6A;
+$color-warning: #FFA726;
 
 html, body {
   font-family: $font-primary;
@@ -18,17 +23,70 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-button, input, textarea {
-  font-family: $font-secondary;
-}
-
-.v-application {
-  font-family: $font-primary;
-}
-
 .v-main {
   padding-left: 180px;
 }
+
+/* 查询按钮樣式 */
+.button-query {
+  background-color: $color-primary;
+  color: white;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #1E88E5;
+  }
+}
+
+/* 新增按钮樣式 */
+.button-add {
+  background-color: $color-success;
+  color: white;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #43A047;
+  }
+}
+
+/* 更新按钮樣式 */
+.button-edit {
+  background-color: $color-warning;
+  color: white;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #FB8C00;
+  }
+}
+
+/* 删除按钮样式 */
+.button-delete {
+  background-color: $color-error;
+  color: white;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #E53935;
+  }
+}
+
+.button-cancel {
+  background-color: #ff5252;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  &:hover {
+    background-color: #e53935;
+  }
+}
+
+
+
+
 
 
 

@@ -1,362 +1,379 @@
 <script setup>
-    import axiosInstance from "@/utils/request";
-    import { ref, onMounted } from 'vue';
+import axiosInstance from "@/utils/axiosHandler";
+import BreadcrumbBar from "@/components/BreadcrumbBar.vue";
+import MessageSnakeBar from "@/components/MessageSnakeBar.vue";
+import { ref, onMounted, reactive } from 'vue';
+import { commonRules } from "@/utils/rules";
+import Swal from "sweetalert2";
 
-    const breadcrumbs = ref([
-        { text: '首頁', disabled: false, href: '/home' },
-        { text: '主題管理', disabled: true, href: '/categories' },
-    ])
-    const name = ref('')
-    const loading = ref(false)
-    const dialogLoading = ref(false)
-    const snackbar = ref(false)
-    const snackbarColor = ref('')
-    const receiveMessage = ref('')
-    const searchFieldName = ref('')
-    const searchFieldDescription = ref('')
-    const pageable = ref({
-      totalElements: Number(0),
-      totalPages: Number(0),
-      pageNumber: Number(1),
-      pageSize: Number(10)
-    })
-    const categories = ref([])
-    const dialogAddCategory = ref(false)
-    const dialogEditCategory = ref(false)
-    const headers = [
-        { title: '序號', key: 'id', sortable: true},
-        { title: '名稱', key: 'name', sortable: true},
-        { title: '描述', key: 'description', sortable: false},
-        { title: '發布時間', key: 'createDate',sortable: true},
-        { title: '更新時間', key: 'updDate',sortable: true },
-        { title: '操作', key: 'actions',sortable: false},
-    ]
-    const category = ref({
-        id: Number(''),
-        name: '',
-        description: ''
-    })
-    onMounted(async () => {
-        await getCategories()
-    })
-    async function getCategories() {
-        loading.value = true
-        await axiosInstance.get('/categories', {params: {
-            name: searchFieldName.value,
-            description: searchFieldDescription.value,
-            page: pageable.value.pageNumber,
-            pageSize: pageable.value.pageSize
-          }}).then((response) => {
-            const apiResponse = response.data;
-            if (apiResponse.result) {
-              categories.value = apiResponse.data.content
-              pageable.value.totalPages = apiResponse.data.totalPages
-              pageable.value.totalElements = apiResponse.data.totalElements
-              pageable.value.pageNumber = apiResponse.data.number + 1
-              pageable.value.pageSize = apiResponse.data.size
-            } else {
-              snackbarColor.value = 'error';
-              receiveMessage.value = apiResponse.message;
-              snackbar.value = true;
-            }
-        }).catch(() => {
-            loading.value = false
-        }).finally(() => {
-            loading.value = false
-        })
-    }
+const breadcrumbs = ref([
+  { text: '首頁', disabled: false, href: '/home' },
+  { text: '主題管理', disabled: true, href: '/categories' },
+]);
 
-    async function getCategory(id) {
-        loading.value = true
-        await axiosInstance.get('/categories/' + Number(id)).then((response) => {
-            const apiResponse = response.data;
-            if(apiResponse.result) {
-                category.value = apiResponse.data
-                loading.value = false
-            }
-        }).catch(() => {
-            loading.value = false
-        })
-    }
+const loading = ref(false);
+const dialogLoading = ref(false);
 
-    function handleAddCategory() {
-        resetCategory()
-        dialogAddCategory.value = true
-    }
+const addCategoryForm = ref(null);
+const editCategoryForm = ref(null);
+const addCategoryFormValid = ref(false);
+const editCategoryFormValid = ref(false);
 
-    function handleEditCategory(id) {
-        resetCategory()
-        getCategory(id)
-        dialogEditCategory.value = true
-    }
+const snackbar = reactive({
+  visible: false,
+  color: '',
+  message: ''
+});
 
-    function resetCategory() {
-        category.value = {
-            id: Number(''),
-            name: '',
-            description: ''
-        }
-    }
+const searchFields = reactive({
+  name: '',
+  description: '',
+});
 
-    async function addCategory() {
-        await axiosInstance.post('/categories',{
-              name: category.value.name,
-              description: category.value.description
-        }
-        ).then((response) => {
-            loading.value = true
-            const apiResponse = response.data
-            if(apiResponse.result) {
-               dialogAddCategory.value = false
-               snackbarColor.value = 'success'
-               receiveMessage.value = apiResponse.message
-               snackbar.value = true
-            } else {
-               snackbarColor.value = 'error'
-               receiveMessage.value = apiResponse.message
-               snackbar.value = true
-            }
-        }).catch(() => {
-            loading.value = false
-        }).finally(() => {
-            loading.value = false
-            getCategories()
-        })
-    }
+const pageable = reactive({
+  totalElements: 0,
+  totalPages: 0,
+  pageNumber: 1,
+  pageSize: 10,
+});
 
-    async function editCategory() {
-       await axiosInstance.put('/categories', {
-           id: category.value.id,
-           name: category.value.name,
-           description: category.value.description
-       }).then((response) => {
-           loading.value = true
-           const apiResponse = response.data
-           if(apiResponse.result) {
-              dialogEditCategory.value = false
-              snackbarColor.value = 'success'
-              receiveMessage.value = apiResponse.message
-              snackbar.value = true
-           } else {
-              snackbarColor.value = 'error'
-              receiveMessage.value = apiResponse.message
-              snackbar.value = true
-           }
-       }).catch(() => {
-           loading.value = false
-       }).finally(() => {
-          loading.value = false
-          getCategories()
-       })
-    }
+const categories = reactive([]);
+const category = reactive({
+  id: null,
+  name: '',
+  description: ''
+});
 
-    async function deleteCategory(id) {
-       await axiosInstance.delete('/categories/' + Number(id)).then((response) => {
-           loading.value = true
-           const apiResponse = response.data
-           if(apiResponse.result) {
-             snackbarColor.value = 'success'
-             receiveMessage.value = apiResponse.message
-             snackbar.value = true
-             dialogEditCategory.value = false
-           } else {
-              snackbarColor.value = 'error'
-              receiveMessage.value = apiResponse.message
-              snackbar.value = true
-           }
-       }).catch(() => {
-           loading.value = false
-       }).finally(() => {
-          loading.value = false
-          getCategories()
-       })
+const dialogAddCategory = ref(false);
+const dialogEditCategory = ref(false);
+
+const headers = [
+  { title: '序號', key: 'id', sortable: true },
+  { title: '名稱', key: 'name', sortable: true },
+  { title: '描述', key: 'description', sortable: false },
+  { title: '發布時間', key: 'createDate', sortable: true },
+  { title: '更新時間', key: 'updDate', sortable: true },
+  { title: '操作', key: 'actions', sortable: false },
+];
+
+onMounted(async () => {
+  await getCategories();
+});
+
+// 共用函數
+function showSnackbar(color, message) {
+  snackbar.visible = true;
+  snackbar.color = color;
+  snackbar.message = message;
+}
+
+function handlePageChange(apiResponse) {
+  pageable.totalElements = apiResponse.totalElements;
+  pageable.totalPages = apiResponse.totalPages;
+  pageable.pageNumber = apiResponse.number + 1;
+  pageable.pageSize = apiResponse.size;
+}
+
+function resetCategory() {
+  Object.assign(category, {
+    id: null,
+    name: '',
+    description: ''
+  });
+}
+
+async function getCategories() {
+  loading.value = true;
+  try {
+    const response = await axiosInstance.get('/categories', {
+      params: {
+        name: searchFields.name,
+        description: searchFields.description,
+        page: pageable.pageNumber,
+        pageSize: pageable.pageSize
+      }
+    });
+
+    if (response.data.result) {
+      categories.splice(0, categories.length, ...response.data.data.content);
+      handlePageChange(response.data.data);
+    } else {
+      showSnackbar('error', response.data.message);
     }
+  } catch (error) {
+    showSnackbar('error', '請求時發生錯誤，請稍後再試。');
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function getCategory(id) {
+  loading.value = true;
+  try {
+    const response = await axiosInstance.get(`/categories/${id}`);
+    if (response.data.result) {
+      Object.assign(category, response.data.data);
+    } else {
+      showSnackbar('error', response.data.message);
+    }
+  } catch (error) {
+    showSnackbar('error', '請求時發生錯誤，請稍後再試。');
+  } finally {
+    loading.value = false;
+  }
+}
+
+function handleEditCategory(id) {
+  resetCategory();
+  getCategory(id).then(() => {
+    dialogEditCategory.value = true;
+  });
+}
+
+function handleAddCategory() {
+  resetCategory();
+  dialogAddCategory.value = true;
+}
+
+async function addCategory() {
+  try {
+    dialogLoading.value = true;
+    const response = await axiosInstance.post('/categories', category);
+    if (response.data.result) {
+      showSnackbar('success', response.data.message);
+      await getCategories();
+      dialogAddCategory.value = false;
+    } else {
+      showSnackbar('error', response.data.message);
+    }
+  } catch (error) {
+    showSnackbar('error', error.message);
+  } finally {
+    dialogLoading.value = false;
+  }
+}
+
+async function editCategory() {
+  try {
+    dialogLoading.value = true;
+    const response = await axiosInstance.put(`/categories/${category.id}`, category);
+    if (response.data.result) {
+      showSnackbar('success', response.data.message);
+      await getCategories();
+      dialogEditCategory.value = false;
+    } else {
+      showSnackbar('error', response.data.message);
+    }
+  } catch (error) {
+    showSnackbar('error', error.message);
+  } finally {
+    dialogLoading.value = false;
+  }
+}
+
+async function deleteCategory(id) {
+  try {
+    const result = await Swal.fire({
+      title: '確定要刪除嗎?',
+      text: '刪除後將無法復原',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: '確定',
+      cancelButtonText: '取消'
+    });
+    if (!result.isConfirmed) return;
+
+    loading.value = true;
+    const response = await axiosInstance.delete(`/categories/${id}`);
+    if (response.data.result) {
+      showSnackbar('success', response.data.message);
+      await getCategories();
+    } else {
+      showSnackbar('error', response.data.message);
+    }
+  } catch (error) {
+    showSnackbar('error', error.message);
+  } finally {
+    loading.value = false;
+  }
+}
 </script>
 
 <template>
-    <v-breadcrumbs bg-color="breadcrumb" active-color="primary" rounded :items="breadcrumbs" divider=">" >
-      <template v-slot:prepend>
-        <v-icon icon="mdi-home" size="small"></v-icon>
-      </template>
-      <template v-slot:item="{ item }">
-        <v-breadcrumbs-item :title="item.text" :href="item.href" :disabled="item.disabled">
-        </v-breadcrumbs-item>
-      </template>
-    </v-breadcrumbs>
-    <v-card flat full-width>
-      <v-card-title class="d-flex align-center pe-2">
-        <v-icon icon="mdi-folder"></v-icon> &nbsp;
-        主題管理頁面
-        <v-spacer></v-spacer>
-        <v-text-field
-            v-model="searchFieldName"
-            density="compact"
-            label="名稱"
-            prepend-inner-icon="mdi-magnify"
-            variant="solo-filled"
-            flat
-            hide-details
-            single-line
-        ></v-text-field>
-        <v-text-field
-            class="me-2"
-            v-model="searchFieldDescription"
-            density="compact"
-            label="描述"
-            prepend-inner-icon="mdi-magnify"
-            variant="solo-filled"
-            flat
-            hide-details
-            single-line
-        ></v-text-field>
-        <v-divider class="mx-2" inset vertical></v-divider>
-        <v-btn :bordered="false" color="search" class="mr-2 outlined" size="large" density="compact" @click="getCategories">查詢</v-btn>
-        <v-btn :bordered="false" color="add" class="ml-2 outlined" size="large"   density="compact" @click="handleAddCategory">新增</v-btn>
-      </v-card-title>
-      <v-data-table multi-sort
-                    :sort-by="[{ key: 'name', order: 'asc'}, { key: 'id', order: 'asc'}]"
-                    :headers="headers"
-                    :loading="loading"
-                    loading-text="載入資料中..."
-                    :items="categories"
-                    :items-per-page="pageable.pageSize"
-                    height="calc(100vh - 300px)">
-        <template v-slot:top>
-          <v-toolbar flat>
-            <v-toolbar-title>分頁列表</v-toolbar-title>
-          </v-toolbar>
-        </template>
-        <template v-slot:item.actions="{ item }">
-            <v-btn  class="mr-2 outlined" density="compact" color="edit" @click="handleEditCategory(item.id)">編輯</v-btn>
-            <v-btn  class="mr-2 outlined" density="compact" color="delete" @click="deleteCategory(item.id)">刪除</v-btn>
-        </template>
-        <template v-slot:bottom>
-          <div class="text-center pt-2">
-            <v-pagination
-                v-model="pageable.pageNumber"
-                :length="pageable.totalPages"
-                total-visible="5"
-                @update:modelValue="getCategories"
-                rounded="circle"
-                density="compact"
-            ></v-pagination>
-          </div>
-        </template>
-      </v-data-table>
-    </v-card>
+  <!-- 導覽列 -->
+  <BreadcrumbBar :items="breadcrumbs" />
+  <!-- 消息顯示 -->
+  <MessageSnakeBar :color="snackbar.color" :message="snackbar.message" v-if="snackbar.visible" />
 
-    <v-dialog v-model="dialogAddCategory" persistent max-width="600px">
-      <v-card class="rounded-xl pa-5">
-        <v-card-title>
-          <span class="text-h5">新增分類</span>
-        </v-card-title>
-        <v-card-text>
+  <!-- 主題管理 -->
+  <v-card flat>
+    <v-card-title class="d-flex align-center justify-space-between px-4 py-2">
+      <div class="d-flex align-center">
+        <v-text-field
+          v-model="searchFields.name"
+          density="compact"
+          label="名稱"
+          prepend-inner-icon="mdi-magnify"
+          variant="outlined"
+          hide-details
+          class="mr-2"
+        />
+        <v-text-field
+          v-model="searchFields.description"
+          density="compact"
+          label="描述"
+          prepend-inner-icon="mdi-magnify"
+          variant="outlined"
+          hide-details
+          class="mr-2"
+        />
+        <v-btn
+          color="primary"
+          variant="tonal"
+          @click="getCategories"
+          class="mr-2"
+        >
+          查詢
+        </v-btn>
+        <v-btn
+          class="button-add"
+          variant="tonal"
+          @click="handleAddCategory"
+        >
+          新增
+        </v-btn>
+      </div>
+    </v-card-title>
+    <v-data-table
+      :headers="headers"
+      :items="categories"
+      :loading="loading"
+      :items-per-page="pageable.pageSize"
+      @update:options="getCategories"
+    >
+      <template v-slot:item.actions="{ item }">
+        <v-btn class="mr-2 button-edit" variant="outlined" density="compact" @click="handleEditCategory(item.id)">編輯</v-btn>
+        <v-btn class="mr-2 button-delete" variant="outlined" density="compact" @click="deleteCategory(item.id)">刪除</v-btn>
+      </template>
+    </v-data-table>
+  </v-card>
+
+  <!-- 新增分類 -->
+  <v-dialog v-model="dialogAddCategory" persistent width="auto" transition="dialog-bottom-transition">
+    <v-card class="px-5 py-5" :loading="dialogLoading">
+      <v-card-title class="bg-primary text-white px-5 py-3">
+        <span class="text-h5 font-weight-bold">新增分類</span>
+      </v-card-title>
+      <v-form ref="addCategoryForm" v-model="addCategoryFormValid" validation-on="lazy blur"
+              @submit.prevent="addCategory">
+        <v-card-text class="px-5 py-3">
           <v-container>
             <v-row>
-              <v-col
-                  cols="12"
-                  sm="6"
-                  md="4"
-              >
-                名稱:
+              <v-col cols="12" sm="4" md="6" class="py-2">
                 <v-text-field
-                    v-model="category.name"
-                    label="名稱"
-                    required
-                ></v-text-field>
+                  v-model="category.name"
+                  label="名稱"
+                  :rules="[commonRules.required]"
+                  required
+                  density="compact"
+                  variant="outlined"
+                />
               </v-col>
-              <v-col
-                  cols="12">
-                描述:
+              <v-col cols="12" sm="4" md="6" class="py-2">
                 <v-text-field
-                    v-model="category.description"
-                    label="描述"
-                    required
-                ></v-text-field>
+                  v-model="category.description"
+                  label="描述"
+                  density="compact"
+                  variant="outlined"
+                />
               </v-col>
             </v-row>
           </v-container>
         </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
+        <v-card-actions class="px-5 pb-5">
+          <v-spacer />
           <v-btn
-              color="add"
-              variant="text"
-              @click="addCategory()"
+            class="add-button"
+            variant="tonal"
+            type="submit"
+            :disabled="!addCategoryFormValid"
           >
             新增
           </v-btn>
           <v-btn
-              color="cancel"
-              variant="text"
-              @click="dialogAddCategory = false"
+            class="button-cancel"
+            variant="tonal"
+            @click="dialogAddCategory = false"
           >
             取消
           </v-btn>
         </v-card-actions>
-      </v-card>
-    </v-dialog>
+      </v-form>
+    </v-card>
+  </v-dialog>
 
-    <v-dialog v-model="dialogEditCategory" persistent max-width="600px">
-      <v-card class="rounded-xl pa-5" :loading="dialogLoading" loading-text="加載中...">
-        <v-card-title>
-          <span class="text-h5">編輯分類</span>
-        </v-card-title>
-        <v-card-text>
+  <!-- 編輯分類 -->
+  <v-dialog v-model="dialogEditCategory" persistent width="auto" transition="dialog-bottom-transition">
+    <v-card class="px-5 py-5" :loading="dialogLoading">
+      <v-card-title class="bg-primary text-white px-5 py-3">
+        <span class="text-h5 font-weight-bold">編輯分類</span>
+      </v-card-title>
+      <v-form ref="editCategoryForm" v-model="editCategoryFormValid" validation-on="blur">
+        <v-card-text class="px-5 py-3">
           <v-container>
             <v-row>
-              <v-col
-                  cols="12"
-                  sm="6"
-                  md="4"
-              >
-                名稱:
+              <v-col cols="12" sm="4" md="6" class="py-2">
                 <v-text-field
-                    v-model="category.name"
-                    label="名稱"
-                    required
-                ></v-text-field>
+                  v-model="category.name"
+                  label="名稱"
+                  :rules="[commonRules.required]"
+                  required
+                  density="compact"
+                  variant="outlined"
+                />
               </v-col>
-              <v-col
-                  cols="12">
-                描述:
+              <v-col cols="12" sm="4" md="6" class="py-2">
                 <v-text-field
-                    v-model="category.description"
-                    label="描述"
-                    required
-                ></v-text-field>
+                  v-model="category.description"
+                  label="描述"
+                  density="compact"
+                  variant="outlined"
+                />
               </v-col>
             </v-row>
           </v-container>
         </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
+        <v-card-actions class="px-5 pb-5">
+          <v-spacer />
           <v-btn
-              color="add"
-              variant="text"
-              @click="editCategory()"
+            class="button-edit"
+            variant="tonal"
+            @click="editCategory"
+            :disabled="!editCategoryFormValid"
           >
             編輯
           </v-btn>
           <v-btn
-              color="cancel"
-              variant="text"
-              @click="dialogEditCategory = false"
+            class="button-cancel"
+            variant="tonal"
+            @click="dialogEditCategory = false"
           >
             取消
           </v-btn>
         </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <v-snackbar v-model="snackbar" :absolute="true" :top="true" :color="snackbarColor" timeout="1000">
-      {{ receiveMessage }}
-    </v-snackbar>
+      </v-form>
+    </v-card>
+  </v-dialog>
 </template>
 
 <style scoped lang="sass">
 .v-btn
-  transition: background-color 0.3s ease
-.v-btn:hover
-  background-color: var(--v-primary-base)
+  color: rgba(var(--v-theme-on-background), var(--v-disabled-opacity))
+  text-decoration: none
+  transition: .2s ease-in-out
+
+  &:hover
+    color: var(--v-primary-base)
 </style>
